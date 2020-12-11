@@ -10,7 +10,6 @@
 
   - reader.py: convert csv files into a single json file, which is located at /json/stations.json
 - railways/:
-  - railways-init.csv: backup file, could be ingored
   - railways.csv: railway lines listed with its construction time, design speed, initial station, terminus, and of course its name
 - json/: data files in json format
   - stations.json: stations' schedules
