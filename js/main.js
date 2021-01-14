@@ -65,20 +65,17 @@ function basic_configuration(svg) {
 
         function click_node(ID){
             if(tot_selected == 0){
-                tot_selected++;
-                select_id.push(ID);
-                View1(ID);
+                tot_selected++; select_id.push(ID);
+                View1(ID); return 1;
             }
             else if(tot_selected == 1){
                 if(select_id[0] == ID){
-                    tot_selected--;
-                    select_id.pop();
-                    Recovery();
+                    tot_selected--; select_id.pop();
+                    Recovery(); return 0;
                 }
                 else{
-                    tot_selected++;
-                    select_id.push(ID);
-                    View2(select_id[0], ID);
+                    tot_selected++; select_id.push(ID);
+                    View2(select_id[0], ID); return 1;
                 }
             }
             else{
@@ -88,13 +85,13 @@ function basic_configuration(svg) {
                     select_id[1] = tmp;
                 }
                 if(select_id[1] == ID){
-                    select_id.pop();
-                    tot_selected--;
-                    View1(select_id[0]);
+                    select_id.pop(); tot_selected--;
+                    View1(select_id[0]); return 0;
                 }
             }
+            return 2;
         }
-        
+
         // links
         link = svg.append("g")
             // .attr("stroke", "#e4c6d0")
@@ -124,7 +121,9 @@ function basic_configuration(svg) {
                     .attr('opacity', 1.0);
             })
             .on("click", function (e, d) {
-                click_node(d.id);
+                let ret = click_node(d.id);
+                if(ret==1) d3.select(this).attr('fill', '#990000');
+                else if(ret==0) d3.select(this).attr('fill', getcolor());
             });
 
         text = svg.append("g")
@@ -135,18 +134,24 @@ function basic_configuration(svg) {
     }
 }
 
-function drawer() {// 这函数也是展示图布局的一部分，之后改
+function drawer() {
     console.log(link, show_links, loc);
     link
+        .transition()
+        .duration(1500)
         .attr("x1", d => loc[d.u][1])
         .attr("y1", d => loc[d.u][0])
         .attr("x2", d => loc[d.v][1])
         .attr("y2", d => loc[d.v][0]);
 
     node
+        .transition()
+        .duration(1500)
         .attr("cx", d => loc[d.id][1])
         .attr("cy", d => loc[d.id][0]);
     text
+        .transition()
+        .duration(1500)
         .attr("x", d => loc[d.id][1])
         .attr("y", d => loc[d.id][0]);
 }

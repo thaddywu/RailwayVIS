@@ -31,12 +31,26 @@ function set_pos(){
 }
 
 // 下面开始是关于交互部分的位置计算与显示
+let const_V1_scale = 20;
+let V1_scale = const_V1_scale;
 function View1(ID) {  // 第一视图:有一个点在中间
     console.log("Enter View 1! ID=",ID);
+    loc[ID] = project_to_screen(0.5, 0.5);
+    console.log(loc[ID]);
+    for(let i = 0; i < tot_show_nodes; i++){
+        if(i == ID) continue;
+        let real_dis = get_realdis(real_position[i], real_position[ID]);
+        let now_dis = V1_scale * result[i][ID];
+        loc[i][0] = loc[ID][0] + (real_position[ID][1] - real_position[i][1])*(now_dis/real_dis);
+        loc[i][1] = loc[ID][1] + (real_position[i][0] - real_position[ID][0])*(now_dis/real_dis);
+    }
+    drawer()
 }
 function View2(ID1, ID2) {  // 第二视图:选了两个点
     console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
 }
 function Recovery() {  // 恢复正常视图
     console.log("Recovery");
+    graph_layout_algorithm();
+    drawer();
 }
