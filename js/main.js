@@ -6,19 +6,22 @@ let height = _height;
 let lmargin = width * 0.2, rmargin = width * 0.88;
 let umargin = height * 0.1, dmargin = height * 0.9;
 
-let data = null;
-let data_file = './json/tmp.json';
+let show_data_file = './json/tmp.json';
+let data_file = '';
 
-let highlight_nodes = ['北京','北京南','上海'], highlight_links = [['北京','北京南'],['北京','上海'],['北京南','上海']];
-// 用来存储要展示的点和铁路，可直接在这里打或者通过文件读入，以上只是个例子
+let tot_show_nodes = 0, show_links = [], show_nodes = []; // 要展示的城市编号为0~tot_show_nodes-1。show_links用来存储要展示的铁路, 从show_data_file里读入，预处理阶段存进来
+let cityname2id = {}, id2cityname = []; //{'重庆':0, '上海':1, ... }、['重庆', '上海', ...]
+let real_position = []; //按照编号对应的经纬度，形如[ [106.549, 29.581], [121.445, 31.213], ... ]
 
-let links = [], nodes = [], result = []; //用来存最短路建图的点集和边集、result表示要传给图布局的结果(符合语义的最短路)
+let tot_nodes, to = [], nxt = [], head = [], weight = [], tot_edges = 0; //用来存最短路建图的点数和邻接表
+let result = null; // result表示要传给图布局的结果(符合语义的最短路), 大小为tot_show_nodes*tot_show_nodes的二维数组
+let loc = null; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
 let link, node, text; // d3用来画图的东西
 let mode = 0, time, year, month; // 交互的参数
 
 function screener() {
-    // 等到JSON格式确定，这里用来预处理JSON文件，顺便根据mode把最短路的图建好，存在nodes和links里
-    // tmp.json里的数据为若干个list,每个list里
+    // TODO 等到JSON文件造好，需要完善建边过程
+    // 根据时间把最短路的图建好，存在邻接表里
 
     // nodes = data.nodes.filter((d, i) => (d.weight >= thresh_node));
     // n = nodes.length;
@@ -33,15 +36,23 @@ function screener() {
     // }
     //
     // links = data.links.filter((d, i) => (d.weight >= thresh_link && checker(d.source) && checker(d.target)));
+
+    for(i = 0; i < tot_show_nodes; i++){
+        for (j = i+1; j < tot_show_nodes; j++){
+            add_edge(i, j, get_realdis(real_position[i],real_position[j]));
+            add_edge(j, i, get_realdis(real_position[i],real_position[j]));
+        }
+    }
 }
 
 function basic_configuration(svg) {
     //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
 
-    if(mode == 0) { // 24h mode
-
-    }
-    else{ //
+    // if(mode == 0) { // 24h mode
+    //
+    // }
+    // else
+        { //
         // function getcolor(w) {
         //     if (w < 5) return "#bbcdc5";
         //     if (w < 10) return "#c2ccd0";
@@ -60,13 +71,13 @@ function basic_configuration(svg) {
         //     .join("line")
         //     .attr("stroke-width", d => Math.sqrt(d.weight));
         //
-        // // nodes
-        // node = svg.append("g")
-        //     .attr("stroke-width", 0.5)
-        //     .selectAll("circle")
-        //     .data(nodes)
-        //     .join("circle")
-        //     .attr("r", d => Math.sqrt(d.weight) * 2 + 0.5)
+        // nodes
+        node = svg.append("g")
+            .attr("stroke-width", 0.5)
+            .selectAll("circle")
+            .data(show_nodes)
+            .join("circle")
+            .attr("r", 10);
         //     .attr("stroke", d => getcolor(d.weight))
         //     .attr("fill", d => getcolor(d.weight))
         //     .attr("status", 0)
@@ -138,10 +149,11 @@ function drawer() {// 这函数也是展示图布局的一部分，之后改
     //     .attr("y1", d => nodes_dict[d.source].y)
     //     .attr("x2", d => nodes_dict[d.target].x)
     //     .attr("y2", d => nodes_dict[d.target].y);
-    //
-    // node
-    //     .attr("cx", d => d.x)
-    //     .attr("cy", d => d.y);
+
+    node
+        .attr("cx", d => loc[d.id][1])
+        .attr("cy", d => loc[d.id][0]);
+    console.log(node)
     // text
     //     .attr("x", d => d.x)
     //     .attr("y", d => d.y)
@@ -212,6 +224,30 @@ function set_ui() {
         .style("font-family", fontFamily);
 }
 
+let data1 = null, data2 = null;
+function data_prepare() {
+    for(var city in data2.nodes){
+        cityname2id[city] = tot_show_nodes;
+        id2cityname.push(city);
+        show_nodes.push({'id':tot_show_nodes});
+        tot_show_nodes++;
+        real_position.push(data2.nodes[city]);
+    }
+    for(var i=0, len=data2.links.length; i<len; i++){
+        show_links.push([cityname2id[data2.links[i][0]], cityname2id[data2.links[i][1]]]);
+    }
+    tot_nodes = tot_show_nodes;
+    // for(var city in data1.nodes){
+    //     // 对于不需要show但出现在图中的点，往后加编号和映射关系
+    // }
+    result = new Array(tot_show_nodes);
+    loc = new Array(tot_show_nodes);
+    for(i=0; i<tot_show_nodes; i++){
+        result[i] = new Array(tot_show_nodes);
+    }
+    // console.log(real_position, cityname2id, show_links)
+}
+
 function update(mode_change) {
     if(mode_change){
         mode ^= 1;
@@ -237,10 +273,14 @@ function update(mode_change) {
 
 function main() {
     set_ui();
-    d3.json(data_file).then(function (DATA) {
-        data = DATA;
+    // d3.json(data_file).then(function (DATA) {
+    //     data = DATA;
+    // });
+    d3.json(show_data_file).then(function (DATA) {
+        data2 = DATA;
+        data_prepare();
         draw_graph();
     });
 }
 
-main()
+main();

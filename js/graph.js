@@ -1,3 +1,21 @@
 function graph_layout_algorithm(){
-    // result = xxxx
+    geographical_position(); // TODO 现在这个函数是仅根据地理位置来计算，理想的布局算法由 @lzg 来完成一下
+    // tSNE();
+}
+
+function project_to_screen(hh, ww) { // hh, ww为[0,1]之间的小数，这个函数将这个区间上的值映射到整个屏幕去掉margin的中间部分
+    return [umargin+(dmargin-umargin)*hh, lmargin+(rmargin-lmargin)*ww];
+}
+
+function geographical_position(){
+    //经度大概在90-130, 纬度在20-50
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc[i] = project_to_screen((50 - real_position[i][1])/30, (real_position[i][0]-90)/40);
+    }
+}
+
+function tSNE(){
+    // 一共有tot_show_nodes个点需要计算位置，标号为0-tot_show_nodes-1，两两的距离存在了result里
+    // 如果需要的话，可以使用real_position数组，里面按标号存了实际的经纬度
+    // 最后把结果像上面函数一样存进loc里就行
 }
