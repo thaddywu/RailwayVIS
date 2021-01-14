@@ -7,28 +7,18 @@ let lmargin = width * 0.2, rmargin = width * 0.88;
 let umargin = height * 0.1, dmargin = height * 0.9;
 
 let data = null;
-let data_file = './json/stations.json';
+let data_file = './json/tmp.json';
 
-let highlight_nodes = [], highlight_links = []; // 用来存储要展示的点和铁路，可直接在这里打或者通过文件读入
+let highlight_nodes = ['北京','北京南','上海'], highlight_links = [['北京','北京南'],['北京','上海'],['北京南','上海']];
+// 用来存储要展示的点和铁路，可直接在这里打或者通过文件读入，以上只是个例子
+
 let links = [], nodes = [], result = []; //用来存最短路建图的点集和边集、result表示要传给图布局的结果(符合语义的最短路)
 let link, node, text; // d3用来画图的东西
 let mode = 0, time, year, month; // 交互的参数
 
-// 下面这段是上次力导向用的，也不知道最后用不用的上
-// let nodes_dict = {}, nodes2num = {}, thresh_node = 0, thresh_link = 0, n, iteration = 300, spring_len = 5;
-// let attr_coef = 0.1, rep_coef = 0.05;
-//
-// function graph_layout_algorithm(nodes, links) {
-//
-//     polygon(nodes, links);
-//     final_algorithm(nodes, links, iteration, spring_len, attr_coef, rep_coef);
-//     normalize(nodes, links);
-//
-//
-// }
-
 function screener() {
     // 等到JSON格式确定，这里用来预处理JSON文件，顺便根据mode把最短路的图建好，存在nodes和links里
+    // tmp.json里的数据为若干个list,每个list里
 
     // nodes = data.nodes.filter((d, i) => (d.weight >= thresh_node));
     // n = nodes.length;
@@ -46,9 +36,12 @@ function screener() {
 }
 
 function basic_configuration(svg) {
-    //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西，详细的可以放在最后写，demo给个最基本的就行。
+    //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
 
     if(mode == 0) { // 24h mode
+
+    }
+    else{ //
         // function getcolor(w) {
         //     if (w < 5) return "#bbcdc5";
         //     if (w < 10) return "#c2ccd0";
@@ -137,9 +130,6 @@ function basic_configuration(svg) {
         //         }
         //     });
     }
-    else{
-
-    }
 }
 
 function drawer() {// 这函数也是展示图布局的一部分，之后改
@@ -198,21 +188,17 @@ function draw_graph() {
         .attr('width', width)
         .attr('height', height);
 
-    //将数据预处理，并依照参数筛掉一些铁路(可以通过在外面预处理JSON优化，之后再说)
-    screener();
+    screener(); // 将数据预处理，并依照参数筛掉一些铁路。根据参数，将建好的边存进links和nodes里
 
-    // 基本的布局设置，依赖于数据筛选器的结果
-    basic_configuration(svg);
+    basic_configuration(svg); // 基本的布局设置，依赖于数据筛选器的结果
     
     interactive_bar(); // 交互模块
 
-    //cal_shortest_path(); // 计算最短路
+    cal_shortest_path(); // 根据links和nodes里的图，计算最短路, 并将结果以二维矩阵的形式存进result里
 
-    // 图布局算法
-    //graph_layout_algorithm(nodes, links);
+    graph_layout_algorithm();  // 根据result, 计算返回每个点的坐标 存在某个数组里，比如loc
 
-    // 绘制links, nodes和text的位置
-    //drawer();
+    drawer(); // 绘制links, nodes和text的位置
 }
 
 function set_ui() {
