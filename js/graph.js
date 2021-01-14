@@ -1,6 +1,8 @@
 function graph_layout_algorithm(){
     geographical_position(); // TODO 现在这个函数是仅根据地理位置来计算，理想的布局算法由 @lzg 来完成一下
-    // tSNE();
+    //set_pos();
+
+    console.log("pos = ", loc);
 }
 
 function project_to_screen(hh, ww) { // hh, ww为[0,1]之间的小数，这个函数将这个区间上的值映射到整个屏幕去掉margin的中间部分
@@ -14,8 +16,16 @@ function geographical_position(){
     }
 }
 
-function tSNE(){
+function set_pos(){
     // 一共有tot_show_nodes个点需要计算位置，标号为0-tot_show_nodes-1，两两的距离存在了result里
     // 如果需要的话，可以使用real_position数组，里面按标号存了实际的经纬度
     // 最后把结果像上面函数一样存进loc里就行
+    // console.log("result = ", result);
+    // console.log("result len = ", result.length);
+    // console.log("point_num = ", tot_show_nodes);
+    compute_position = mds.classic(result);
+
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc[i] = project_to_screen((20 + compute_position[i][1])/30, (compute_position[i][0] + 20)/40);
+    }
 }
