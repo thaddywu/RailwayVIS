@@ -1,6 +1,6 @@
 function graph_layout_algorithm(){
-    geographical_position(); // TODO 现在这个函数是仅根据地理位置来计算，理想的布局算法由 @lzg 来完成一下
-    //set_pos();
+    //geographical_position(); // TODO 现在这个函数是仅根据地理位置来计算，理想的布局算法由 @lzg 来完成一下
+    set_pos();
 
     console.log("pos = ", loc);
 }
@@ -28,4 +28,15 @@ function set_pos(){
     for(let i = 0; i < tot_show_nodes; i++){
         loc[i] = project_to_screen((20 + compute_position[i][1])/30, (compute_position[i][0] + 20)/40);
     }
+}
+
+// 下面开始是关于交互部分的位置计算与显示
+function View1(ID) {  // 第一视图:有一个点在中间
+    console.log("Enter View 1! ID=",ID);
+}
+function View2(ID1, ID2) {  // 第二视图:选了两个点
+    console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
+}
+function Recovery() {  // 恢复正常视图
+    console.log("Recovery");
 }

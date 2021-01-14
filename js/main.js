@@ -18,6 +18,7 @@ let result = null; // result表示要传给图布局的结果(符合语义的最
 let loc = null; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
 let link, node, text; // d3用来画图的东西
 let mode = 0, time, year, month; // 交互的参数
+let tot_selected = 0, select_id = [];
 
 function screener() {
     // TODO 等到JSON文件造好，需要完善建边过程
@@ -61,7 +62,39 @@ function basic_configuration(svg) {
             // return "#725e82";
             return "#007777";
         }
-        //
+
+        function click_node(ID){
+            if(tot_selected == 0){
+                tot_selected++;
+                select_id.push(ID);
+                View1(ID);
+            }
+            else if(tot_selected == 1){
+                if(select_id[0] == ID){
+                    tot_selected--;
+                    select_id.pop();
+                    Recovery();
+                }
+                else{
+                    tot_selected++;
+                    select_id.push(ID);
+                    View2(select_id[0], ID);
+                }
+            }
+            else{
+                if(select_id[0] == ID){
+                    let tmp = select_id[0];
+                    select_id[0] = select_id[1];
+                    select_id[1] = tmp;
+                }
+                if(select_id[1] == ID){
+                    select_id.pop();
+                    tot_selected--;
+                    View1(select_id[0]);
+                }
+            }
+        }
+        
         // links
         link = svg.append("g")
             // .attr("stroke", "#e4c6d0")
@@ -80,54 +113,19 @@ function basic_configuration(svg) {
             .join("circle")
             .attr("r", 10)
             .attr("stroke", d => getcolor())
-            .attr("fill", d => getcolor());
-        //     .attr("status", 0)
-        //     .on("mouseover", function (e, d) {// 鼠标移动到node上时显示text
-        //         text
-        //             .attr("display", function (f) {
-        //                 if (f.id == d.id || f.weight > 40) {
-        //                     return "null";
-        //                 } else {
-        //                     return "none";
-        //                 }
-        //             })
-        //     })
-        //     .on("mouseout", function (e, d) {// 鼠标移出node后按条件判断是否显示text
-        //         text
-        //             .attr("display", function (f) {
-        //                 if (f.weight > 40) {
-        //                     return 'null';
-        //                 } else {
-        //                     return 'none';
-        //                 }
-        //             })
-        //     })
-        //     .on("dblclick", function (e, d) {
-        //         link.attr("stroke-opacity", function (f) {
-        //             if (f.source == d.id || f.target == d.id) {
-        //                 return 1.0;
-        //             } else {
-        //                 return 0.1;
-        //             }
-        //         });
-        //         node.attr("opacity", function (f) {
-        //             console.log(ShortestPath[nodes2num[f.id]][nodes2num[d.id]], nodes2num[f.id], nodes2num[d.id]);
-        //             if (ShortestPath[nodes2num[f.id]][nodes2num[d.id]] == 1 || f.id == d.id) {
-        //                 return 1.0;
-        //             } else {
-        //                 return 0.1;
-        //             }
-        //         });
-        //     })
-        //     .on("click", function (e, d) {
-        //         link.attr("stroke-opacity", function (f) {
-        //             return 0.3;
-        //         });
-        //         node.attr("opacity", function (f) {
-        //             return 1.0;
-        //         });
-        //     });
-        //
+            .attr("fill", d => getcolor())
+            .attr("status", 0)
+            .on("mouseover", function (e, d) {// 鼠标悬停颜色变浅
+                d3.select(this)
+                    .attr('opacity', 0.3);
+            })
+            .on("mouseout", function (e, d) {// 鼠标移出颜色恢复
+                d3.select(this)
+                    .attr('opacity', 1.0);
+            })
+            .on("click", function (e, d) {
+                click_node(d.id);
+            });
 
         text = svg.append("g")
             .selectAll("text")
@@ -229,17 +227,17 @@ function data_prepare() {
     }
     for(var i=0, len=data2.links.length; i<len; i++){
         show_links.push({'u':cityname2id[data2.links[i][0]], 'v':cityname2id[data2.links[i][1]]});
+        //show_links.push({'v':cityname2id[data2.links[i][0]], 'u':cityname2id[data2.links[i][1]]});
     }
     tot_nodes = tot_show_nodes;
     // for(var city in data1.nodes){
-    //     // 对于不需要show但出现在图中的点，往后加编号和映射关系
+    //     // TODO 对于不需要show但出现在图中的点，往后加编号和映射关系
     // }
     result = new Array(tot_show_nodes);
     loc = new Array(tot_show_nodes);
     for(i=0; i<tot_show_nodes; i++){
         result[i] = new Array(tot_show_nodes);
     }
-    // console.log(real_position, cityname2id, show_links)
 }
 
 function update(mode_change) {
