@@ -52,34 +52,35 @@ function basic_configuration(svg) {
     //
     // }
     // else
-        { //
-        // function getcolor(w) {
-        //     if (w < 5) return "#bbcdc5";
-        //     if (w < 10) return "#c2ccd0";
-        //     if (w < 20) return "#75878a";
-        //     if (w < 40) return "#6b6882";
-        //     return "#725e82";
-        // }
+    {
+        function getcolor() {
+            // if (w < 5) return "#bbcdc5";
+            // if (w < 10) return "#c2ccd0";
+            // if (w < 20) return "#75878a";
+            // if (w < 40) return "#6b6882";
+            // return "#725e82";
+            return "#007777";
+        }
         //
-        // // links
-        // link = svg.append("g")
-        //     .attr("stroke", "#e4c6d0")
-        //     //.attr("stroke", "#d2691e")
-        //     .attr("stroke-opacity", 0.3)
-        //     .selectAll("line")
-        //     .data(links)
-        //     .join("line")
-        //     .attr("stroke-width", d => Math.sqrt(d.weight));
-        //
+        // links
+        link = svg.append("g")
+            // .attr("stroke", "#e4c6d0")
+            .attr("stroke", "#d2691e")
+            .attr("stroke-opacity", 0.3)
+            .selectAll("line")
+            .data(show_links)
+            .join("line");
+            // .attr("stroke-width", d => Math.sqrt(d.weight));
+
         // nodes
         node = svg.append("g")
             .attr("stroke-width", 0.5)
             .selectAll("circle")
             .data(show_nodes)
             .join("circle")
-            .attr("r", 10);
-        //     .attr("stroke", d => getcolor(d.weight))
-        //     .attr("fill", d => getcolor(d.weight))
+            .attr("r", 10)
+            .attr("stroke", d => getcolor())
+            .attr("fill", d => getcolor());
         //     .attr("status", 0)
         //     .on("mouseover", function (e, d) {// 鼠标移动到node上时显示text
         //         text
@@ -127,36 +128,29 @@ function basic_configuration(svg) {
         //         });
         //     });
         //
-        // // 学校名称text，只显示满足条件的学校
-        // text = svg.append("g")
-        //     .selectAll("text")
-        //     .data(nodes)
-        //     .join("text")
-        //     .text(d => d.id)
-        //     .attr("display", function (d) {
-        //         if (d.weight > 40) {
-        //             return 'null';
-        //         } else {
-        //             return 'none';
-        //         }
-        //     });
+
+        text = svg.append("g")
+            .selectAll("text")
+            .data(show_nodes)
+            .join("text")
+            .text(d => id2cityname[d.id]);
     }
 }
 
 function drawer() {// 这函数也是展示图布局的一部分，之后改
-    // link
-    //     .attr("x1", d => nodes_dict[d.source].x)
-    //     .attr("y1", d => nodes_dict[d.source].y)
-    //     .attr("x2", d => nodes_dict[d.target].x)
-    //     .attr("y2", d => nodes_dict[d.target].y);
+    console.log(link, show_links, loc);
+    link
+        .attr("x1", d => loc[d.u][1])
+        .attr("y1", d => loc[d.u][0])
+        .attr("x2", d => loc[d.v][1])
+        .attr("y2", d => loc[d.v][0]);
 
     node
         .attr("cx", d => loc[d.id][1])
         .attr("cy", d => loc[d.id][0]);
-    console.log(node)
-    // text
-    //     .attr("x", d => d.x)
-    //     .attr("y", d => d.y)
+    text
+        .attr("x", d => loc[d.id][1])
+        .attr("y", d => loc[d.id][0]);
 }
 
 function interactive_bar() {
@@ -234,7 +228,7 @@ function data_prepare() {
         real_position.push(data2.nodes[city]);
     }
     for(var i=0, len=data2.links.length; i<len; i++){
-        show_links.push([cityname2id[data2.links[i][0]], cityname2id[data2.links[i][1]]]);
+        show_links.push({'u':cityname2id[data2.links[i][0]], 'v':cityname2id[data2.links[i][1]]});
     }
     tot_nodes = tot_show_nodes;
     // for(var city in data1.nodes){
