@@ -74,8 +74,8 @@ var Heap = {
 };
 
 function cal_shortest_path(){
-    // floyd();
-    dijkstra();
+    floyd();
+    // dijkstra();
 }
 
 function floyd(){
@@ -102,31 +102,35 @@ function floyd(){
     }
     for(let i = 0; i < tot_show_nodes; i++){
         for(let j = 0; j < tot_show_nodes; j++){
-            result[i][j] = links[i][j];
+            // result[i][j] = links[i][j];
+            result[i][j] = (links[i][j] + links[j][i]) / 2;
         }
     }
 }
 
 function dijkstra(){
     let Q = Object.create(Heap);
-    let vis = Array(tot_nodes);
+    let vis = Array(tot_nodes), dis = Array(tot_nodes);
     for(let S = 0; S < tot_show_nodes; S++){
         Q.clear();
         for(let i = 0; i < tot_nodes; i++){
             vis[i] = false;
-            result[S][i] = 1e9;
+            dis[i] = 1e9;
         }
-        Q.insert([0,S]); result[S][S]=0;
+        Q.insert([0,S]); dis[S]=0;
         while(Q.cnt > 0){
             let P = Q.top(), x = P[1]; Q.pop();
             if(vis[x]) continue;
             for(let i = head[x]; i; i = nxt[i]){
                 let y = to[i];
-                if(result[S][y] > result[S][x] + weight[i]){
-                    result[S][y] = result[S][x] + weight[i];
-                    Q.insert([result[S][y], y]);
+                if(dis[y] > dis[x] + weight[i]){
+                    dis[y] = dis[x] + weight[i];
+                    Q.insert([dis[y], y]);
                 }
             }
+        }
+        for(let i = 0; i < tot_show_nodes; i++){
+            result[S][i] = dis[i];
         }
     }
 }

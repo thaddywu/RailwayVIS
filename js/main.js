@@ -7,7 +7,7 @@ let lmargin = width * 0.2, rmargin = width * 0.88;
 let umargin = height * 0.1, dmargin = height * 0.9;
 
 let show_data_file = './json/tmp.json';
-let data_file = '';
+let data_file = './json/schedulers.json';
 
 let tot_show_nodes = 0, show_links = [], show_nodes = []; // 要展示的城市编号为0~tot_show_nodes-1。show_links用来存储要展示的铁路, 从show_data_file里读入，预处理阶段存进来
 let cityname2id = {}, id2cityname = []; //{'重庆':0, '上海':1, ... }、['重庆', '上海', ...]
@@ -21,29 +21,37 @@ let mode = 0, time, year, month; // 交互的参数
 let tot_selected = 0, select_id = [];
 
 function screener() {
-    // TODO 等到JSON文件造好，需要完善建边过程
     // 根据时间把最短路的图建好，存在邻接表里
 
-    // nodes = data.nodes.filter((d, i) => (d.weight >= thresh_node));
-    // n = nodes.length;
-    // nodes_dict = {};
-    // nodes2num = {};
-    //
-    // nodes.forEach((d, i) => (nodes_dict[d.id] = d));
-    // nodes.forEach((d, i) => (nodes2num[d.id] = i));
-    //
-    // function checker(x) {
-    //     return nodes_dict.hasOwnProperty(x);
-    // }
-    //
-    // links = data.links.filter((d, i) => (d.weight >= thresh_link && checker(d.source) && checker(d.target)));
+    function comp(str, yy, mm) {
+        let LL = str.split('.');
+        // console.log(LL, yy, mm, parseInt(LL[0]) > yy);
+        if(parseInt(LL[0]) != yy) return parseInt(LL[0]) > yy;
+        if(LL.length == 1 || parseInt(LL[1],[10]) <= mm) return false;
+        return true;
+    }
 
-    for(i = 0; i < tot_show_nodes; i++){
-        for (j = i+1; j < tot_show_nodes; j++){
-            add_edge(i, j, get_realdis(real_position[i],real_position[j]));
-            add_edge(j, i, get_realdis(real_position[i],real_position[j]));
+    tot_edges = 0;
+    head = [];
+    for(train_id in data1){
+        if(comp(data1[train_id].date, year, month)) continue;
+        let nn = data1[train_id].route.length;
+        for(let i = 0; i < nn - 1; i++){
+            let t1 = data1[train_id].route[i].departure;
+            t1 = parseInt(t1.split(":")[0], [10])*60+parseInt(t1.split(":")[1], [10]);
+            let t2 = data1[train_id].route[i+1].arrival;
+            t2 = parseInt(t2.split(":")[0], [10])*60+parseInt(t2.split(":")[1], [10]);
+            add_edge(cityname2id[data1[train_id].route[i].city], cityname2id[data1[train_id].route[i+1].city], t2-t1);
         }
     }
+
+    // //直接根据地理位置建边，仅用于test
+    // for(i = 0; i < tot_show_nodes; i++){
+    //     for (j = i+1; j < tot_show_nodes; j++){
+    //         add_edge(i, j, get_realdis(real_position[i],real_position[j]));
+    //         add_edge(j, i, get_realdis(real_position[i],real_position[j]));
+    //     }
+    // }
 }
 
 function basic_configuration(svg) {
@@ -135,7 +143,7 @@ function basic_configuration(svg) {
 }
 
 function drawer() {
-    console.log(link, show_links, loc);
+    // console.log(link, show_links, loc);
     link
         .transition()
         .duration(1500)
@@ -172,23 +180,10 @@ function interactive_bar() {
         txt.style.display = "none";
     }
 
-    modify('text_mode', 0.02, 0.1);
-    modify('switch_mode', 0.06, 0.1);
-    if(mode == 0) {
-        modify('text_time', 0.02, 0.15);
-        modify('departure_time_hour', 0.02, 0.2);
-        modify('departure_time_minute', 0.02, 0.25);
-        show("text_time");show("departure_time_hour");show("departure_time_minute");
-        hide("text_year");hide("year");hide("text_month");hide("month");
-    }
-    else{
-        modify('text_year', 0.02, 0.15);
-        modify('year', 0.02, 0.2);
-        modify('text_month', 0.02, 0.25);
-        modify('month', 0.02, 0.3);
-        hide("text_time");hide("departure_time_hour");hide("departure_time_minute");
-        show("text_year");show("year");show("text_month");show("month");
-    }
+    modify('text_year', 0.02, 0.15);
+    modify('year', 0.02, 0.2);
+    modify('text_month', 0.02, 0.25);
+    modify('month', 0.02, 0.3);
 }
 
 function draw_graph() {
@@ -223,21 +218,29 @@ function set_ui() {
 
 let data1 = null, data2 = null;
 function data_prepare() {
-    for(var city in data2.nodes){
+    for(let city in data2.nodes){
         cityname2id[city] = tot_show_nodes;
         id2cityname.push(city);
         show_nodes.push({'id':tot_show_nodes});
         tot_show_nodes++;
         real_position.push(data2.nodes[city]);
     }
-    for(var i=0, len=data2.links.length; i<len; i++){
+    for(let i=0, len=data2.links.length; i<len; i++){
         show_links.push({'u':cityname2id[data2.links[i][0]], 'v':cityname2id[data2.links[i][1]]});
         //show_links.push({'v':cityname2id[data2.links[i][0]], 'u':cityname2id[data2.links[i][1]]});
     }
     tot_nodes = tot_show_nodes;
-    // for(var city in data1.nodes){
-    //     // TODO 对于不需要show但出现在图中的点，往后加编号和映射关系
-    // }
+    for(let train_id in data1){
+        let nn = data1[train_id].route.length;
+        for(let i = 0; i < nn; i++){
+            let city = data1[train_id].route[i].city;
+            if(!(city in cityname2id)){
+                cityname2id[city] = tot_nodes;
+                id2cityname.push(city);
+                tot_nodes++;
+            }
+        }
+    }
     result = new Array(tot_show_nodes);
     loc = new Array(tot_show_nodes);
     for(i=0; i<tot_show_nodes; i++){
@@ -246,38 +249,29 @@ function data_prepare() {
 }
 
 function update(mode_change) {
-    if(mode_change){
-        mode ^= 1;
-        let last_mode = document.getElementById('text_mode').textContent;
-        if(last_mode.endsWith("24h")) {
-            document.getElementById('text_mode').textContent = 'Mode: years';
-        }
-        else {
-            document.getElementById('text_mode').textContent = 'Mode: 24h';
-        }
-    }
     year = document.getElementById('year').value;
     document.getElementById('text_year').textContent = 'year: ' + year;
     month = document.getElementById('month').value;
     document.getElementById('text_month').textContent = 'month: ' + month;
-    let hour = document.getElementById('departure_time_hour').value;
-    let minute = document.getElementById('departure_time_minute').value;
-    time = hour*60+minute;
 
+    // screener();
+    // cal_shortest_path();
+    // View1(select_id[0]);
     d3.selectAll("svg > *").remove();
     draw_graph();
 }
 
 function main() {
     set_ui();
-    // d3.json(data_file).then(function (DATA) {
-    //     data = DATA;
-    // });
-    d3.json(show_data_file).then(function (DATA) {
-        data2 = DATA;
-        data_prepare();
-        draw_graph();
+    d3.json(data_file).then(function (DATA) {
+        data1 = DATA;
+        d3.json(show_data_file).then(function (DATA) {
+            data2 = DATA;
+            data_prepare();
+            draw_graph();
+        });
     });
+
 }
 
 main();

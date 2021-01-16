@@ -26,13 +26,13 @@
 	<script src="js/main.js"></script>
 	<div id='container'>
 		<svg></svg>
-		<text id="text_mode"> Mode: 24h</text>
-		<button id="switch_mode" onclick="update(true)"> Switch </button>
-		<text id="text_time"> departure time: </text>
-		<input id="departure_time_hour" type="text" onchange="update(false)" min="0" max="23" value="0">
-		<input id="departure_time_minute" type="text" onchange="update(false)" min="0" max="59" value="00">
+<!--		<text id="text_mode"> Mode: 24h</text>-->
+<!--		<button id="switch_mode" onclick="update(true)"> Switch </button>-->
+<!--		<text id="text_time"> departure time: </text>-->
+<!--		<input id="departure_time_hour" type="text" onchange="update(false)" min="0" max="23" value="0">-->
+<!--		<input id="departure_time_minute" type="text" onchange="update(false)" min="0" max="59" value="00">-->
 		<text id="text_year"> year: 2020 </text>
-		<input type="range" id="year" onchange="update(false)" min="1970" max="2020" value="2020"/>
+		<input type="range" id="year" onchange="update(false)" min="1900" max="2020" value="2020"/>
 		<text id="text_month"> month: 12 </text>
 		<input type="range" id="month" onchange="update(false)" min="1" max="12" value="12"/>
 	</div>
