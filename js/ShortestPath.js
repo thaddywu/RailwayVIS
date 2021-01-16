@@ -10,6 +10,16 @@ function get_realdis(a, b) {
     return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2);
 }
 
+function time2dis(x) {
+    return x;
+    // tmp = x;
+    // if(x<=100) return x;
+    // if(x<=300) return 100+(x-100)*0.8;
+    // if(x<=500) return 260+(x-300)*0.6;
+    // if(x<=1000) return 380+(x-500)*0.4;
+    // return 580+(x-1000)*0.1;
+}
+
 function greater(a, b){ // return a > b?
     if(a[0]!=b[0]) return a[0]>b[0];
     return a[1]>b[1];
@@ -103,7 +113,7 @@ function floyd(){
     for(let i = 0; i < tot_show_nodes; i++){
         for(let j = 0; j < tot_show_nodes; j++){
             // result[i][j] = links[i][j];
-            result[i][j] = (links[i][j] + links[j][i]) / 2;
+            result[i][j] = time2dis( (links[i][j] + links[j][i]) / 2);
         }
     }
 }

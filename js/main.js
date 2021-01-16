@@ -34,9 +34,9 @@ function screener() {
     tot_edges = 0;
     head = [];
     for(train_id in data1){
-        if(comp(data1[train_id].date, year, month)) continue;
         let nn = data1[train_id].route.length;
         for(let i = 0; i < nn - 1; i++){
+            if(comp(data1[train_id].date[i], year, month)) continue;
             let t1 = data1[train_id].route[i].departure;
             t1 = parseInt(t1.split(":")[0], [10])*60+parseInt(t1.split(":")[1], [10]);
             let t2 = data1[train_id].route[i+1].arrival;
@@ -257,8 +257,10 @@ function update(mode_change) {
     // screener();
     // cal_shortest_path();
     // View1(select_id[0]);
-    d3.selectAll("svg > *").remove();
-    draw_graph();
+
+    screener();
+    cal_shortest_path();
+    Recovery();
 }
 
 function main() {

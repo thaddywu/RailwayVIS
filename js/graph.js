@@ -31,7 +31,7 @@ function set_pos(){
         minw = Math.min(compute_position[i][0], minw);
     }
     for(let i = 0; i < tot_show_nodes; i++){
-        loc[i] = project_to_screen((compute_position[i][1]-minh)/1000, (compute_position[i][0] - minw)/2000);
+        loc[i] = project_to_screen((compute_position[i][1]-minh)/1500, (compute_position[i][0] - minw)/3000);
     }
 }
 
