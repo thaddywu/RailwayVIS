@@ -74,16 +74,16 @@ function basic_configuration(svg) {
         function click_node(ID){
             if(tot_selected == 0){
                 tot_selected++; select_id.push(ID);
-                View1(ID); return 1;
+                view_show(); return 1;
             }
             else if(tot_selected == 1){
                 if(select_id[0] == ID){
                     tot_selected--; select_id.pop();
-                    Recovery(); return 0;
+                    view_show(); return 0;
                 }
                 else{
                     tot_selected++; select_id.push(ID);
-                    View2(select_id[0], ID); return 1;
+                    view_show(); return 1;
                 }
             }
             else{
@@ -94,7 +94,7 @@ function basic_configuration(svg) {
                 }
                 if(select_id[1] == ID){
                     select_id.pop(); tot_selected--;
-                    View1(select_id[0]); return 0;
+                    view_show(); return 0;
                 }
             }
             return 2;
@@ -184,6 +184,8 @@ function interactive_bar() {
     modify('year', 0.02, 0.2);
     modify('text_month', 0.02, 0.25);
     modify('month', 0.02, 0.3);
+    modify('align', 0.04, 0.4);
+    modify('pause', 0.12, 0.3);
 }
 
 function draw_graph() {
@@ -248,19 +250,54 @@ function data_prepare() {
     }
 }
 
-function update(mode_change) {
+function update() {
     year = document.getElementById('year').value;
     document.getElementById('text_year').textContent = 'year: ' + year;
     month = document.getElementById('month').value;
     document.getElementById('text_month').textContent = 'month: ' + month;
 
-    // screener();
-    // cal_shortest_path();
-    // View1(select_id[0]);
-
     screener();
     cal_shortest_path();
-    Recovery();
+    view_show();
+}
+
+function update_month_year(){
+    year = document.getElementById('year').value;
+    month = document.getElementById('month').value;
+    // if(year<2008) year++;
+    // else {
+    //     if (month != 12) month++;
+    //     else {
+    //         if (year == 2020) pause();
+    //         else {
+    //             month = 1;
+    //             year++;
+    //         }
+    //     }
+    // }
+    if(year<2020) year++;
+    else pause();
+    document.getElementById('month').value = month;
+    document.getElementById('year').value = year;
+    document.getElementById('text_year').textContent = 'year: ' + year;
+    document.getElementById('text_month').textContent = 'month: ' + month;
+}
+
+function pause() {
+    if(intv){
+        document.getElementById('pause').textContent = ' Resume ';
+        clearInterval(intv);
+        intv=undefined;
+    }
+    else{
+        document.getElementById('pause').textContent = ' Pause ';
+        intv = setInterval(() => {
+            update_month_year();
+            screener();
+            cal_shortest_path();
+            view_show();
+        }, 1000);
+    }
 }
 
 function main() {
@@ -271,6 +308,12 @@ function main() {
             data2 = DATA;
             data_prepare();
             draw_graph();
+            intv = setInterval(() => {
+                update_month_year();
+                screener();
+                cal_shortest_path();
+                view_show();
+            }, 1000);
         });
     });
 
