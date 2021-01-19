@@ -22,16 +22,17 @@ let mode = 0, time, year, month; // 交互的参数
 let tot_selected = 0, select_id = [];
 let ban = [];
 
+function comp(str, yy, mm) { // 判断str所对应的字符串是否在yy.mm之后
+    let LL = str.split('.');
+    // console.log(LL, yy, mm, parseInt(LL[0]) > yy);
+    if(parseInt(LL[0]) != yy) return parseInt(LL[0]) > yy;
+    if(LL.length == 1 || parseInt(LL[1],[10]) <= mm) return false;
+    return true;
+}
+
 function screener() {
     // 根据时间把最短路的图建好，存在邻接表里
 
-    function comp(str, yy, mm) {
-        let LL = str.split('.');
-        // console.log(LL, yy, mm, parseInt(LL[0]) > yy);
-        if(parseInt(LL[0]) != yy) return parseInt(LL[0]) > yy;
-        if(LL.length == 1 || parseInt(LL[1],[10]) <= mm) return false;
-        return true;
-    }
 
     function belong(u, v, date1, railway){
         if(date1 != railway['date']) return false;
@@ -91,6 +92,7 @@ function basic_configuration(svg) {
         function get_railway_info(L) {
             let content = "";
             for(i=0;i<L.length;i++){
+                if(comp(L[i].date, year, month)) continue;
                 content += L[i].name + ':<br/><table>' +
                     '<tr><td>铁路类型:</td><td>' + L[i].service +'</td></tr>' +
                     '<tr><td>电气化:</td><td>' + L[i].electrification +'</td></tr>' +
@@ -131,8 +133,6 @@ function basic_configuration(svg) {
         // links
         link = svg.append("g")
             // .attr("stroke", "#e4c6d0")
-            .attr("stroke", "#d2691e")
-            .attr("stroke-opacity", 0.3)
             .selectAll("line")
             .data(show_links)
             .join("line")
@@ -143,8 +143,8 @@ function basic_configuration(svg) {
                 // content = '1';
                 tooltip.html(content)
                     .style('position', 'absolute')
-                    .style("left",(loc[d.u][1]+loc[d.v][1])/2+"px")
-                    .style("top",(loc[d.u][0]+loc[d.v][0])/2+"px")
+                    .style("left",(lmargin+(rmargin-lmargin)*0.7)+"px")
+                    .style("top",(umargin)+"px")
                     .style('visibility', 'visible');
             })
             .on("mouseout", function (e, d) {// 隐藏
@@ -196,7 +196,26 @@ function basic_configuration(svg) {
 
 function drawer() {
     // console.log(link, show_links, loc);
+    function get_link_color(d) {
+        console.log(d);
+        best_service = '无';
+        for(i=0;i<d.railways.length;i++) {
+            if (comp(d.railways[i].date, year, month)) continue;
+            if (d.railways[i].service == '高速铁路') best_service = '高速铁路';
+            else if(d.railways[i].service == '快速铁路' && best_service != '高速铁路') best_service = '快速铁路';
+            else if(d.railways[i].service == '普速铁路' && best_service == '无') best_service = '普速铁路';
+        }
+        console.log(best_service);
+        if(best_service == '普速铁路') return "#440022";
+        if(best_service == '快速铁路') return "#777700";
+        if(best_service == '高速铁路') return "#447700";
+        return "#ffffff";
+        // return "#d2691e";
+    }
+
     link
+        .attr("stroke", d => get_link_color(d))
+        .attr("stroke-opacity", 0.3)
         .transition()
         .duration(1500)
         .attr("x1", d => loc[d.u][1])

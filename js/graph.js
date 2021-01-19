@@ -1,8 +1,5 @@
 function graph_layout_algorithm(){
-    //geographical_position(); // TODO 现在这个函数是仅根据地理位置来计算，理想的布局算法由 @lzg 来完成一下
     set_pos();
-
-    // console.log("pos = ", loc);
 }
 
 function project_to_screen(hh, ww) { // hh, ww为[0,1]之间的小数，这个函数将这个区间上的值映射到整个屏幕去掉margin的中间部分
@@ -80,7 +77,7 @@ function set_pos(){
 
     avgpos = avgpos_compute(compute_position);
 
-    console.log("avgpos = ", avgpos);
+    // console.log("avgpos = ", avgpos);
 
     // 选取重心与某个特定城市方向不变 supportcityname
     // 对地图进行整个旋转
@@ -94,8 +91,8 @@ function set_pos(){
         let newpos = Polar2cartesian(polarpos.distance, polarpos.radians + angle_bias);
         compute_position[i] = [newpos.x + avgpos[0], newpos.y + avgpos[1]];
 
-        if(i == support_cityid)
-            console.log(cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]));
+        // if(i == support_cityid)
+        //     console.log(cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]));
     }
 
     for(let i = 0; i < tot_show_nodes; i++){
