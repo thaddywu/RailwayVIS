@@ -48,6 +48,8 @@ var STANDARD_AVGPOS = [];     // 重心位置
 var support_cityname = "乌鲁木齐";    // 选取方向固定城市名
 var STANDARD_ANGLE = 210/180*Math.PI; //  方向固定城市具体角度
 var Vmain_scale = const_Vmain_scale;         // 缩放比例
+var support_cityname2 = "哈尔滨";     // 决定是否翻转x的参考城市
+var support_cityname3 = "昆明";       // 决定是否翻转y的参考城市
 
 
 function set_pos(){
@@ -82,8 +84,33 @@ function set_pos(){
     // 选取重心与某个特定城市方向不变 supportcityname
     // 对地图进行整个旋转
     let support_cityid = id2cityname.indexOf(support_cityname);
+    let support_cityid2 = id2cityname.indexOf(support_cityname2);
+    let support_cityid3 = id2cityname.indexOf(support_cityname3);
+
     let support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
     let now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
+
+    let support_citypos2 = [compute_position[support_cityid2][0], compute_position[support_cityid2][1]];
+    let support_citypos3 = [compute_position[support_cityid3][0], compute_position[support_cityid3][1]];
+
+    console.log(support_citypos2, support_citypos, support_citypos3);
+    if(support_citypos2[0] < support_citypos[0]){
+        console.log(1)
+        for(let i = 0; i < tot_show_nodes; i++){
+            compute_position[i][0] = 2*avgpos[0] - compute_position[i][0];
+        }
+    }
+
+    if(support_citypos3[1] < support_citypos2[1]){
+        console.log(2)
+        for(let i = 0; i < tot_show_nodes; i++){
+            compute_position[i][1] = 2*avgpos[1] - compute_position[i][1];
+        }
+    }
+
+    support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
+    now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
+
     let angle_bias = STANDARD_ANGLE - now_support_cityangle;
 
     for(let i = 0; i < tot_show_nodes; i++){
@@ -116,7 +143,7 @@ function view_show(){
 let const_V1_scale = 1;
 let V1_scale = const_V1_scale;
 function View1(ID) {  // 第一视图:有一个点在中间
-    console.log("Enter View 1! ID=",ID);
+    // console.log("Enter View 1! ID=",ID);
     loc[ID] = project_to_screen(0.5, 0.5);
     for(let i = 0; i < tot_show_nodes; i++){
         if(i == ID) continue;
@@ -128,10 +155,10 @@ function View1(ID) {  // 第一视图:有一个点在中间
     drawer()
 }
 function View2(ID1, ID2) {  // 第二视图:选了两个点
-    console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
+    // console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
 }
 function Recovery() {  // 恢复正常视图
-    console.log("Recovery");
+    // console.log("Recovery");
     graph_layout_algorithm();
     drawer();
 }

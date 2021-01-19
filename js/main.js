@@ -197,7 +197,7 @@ function basic_configuration(svg) {
 function drawer() {
     // console.log(link, show_links, loc);
     function get_link_color(d) {
-        console.log(d);
+        // console.log(d);
         best_service = '无';
         for(i=0;i<d.railways.length;i++) {
             if (comp(d.railways[i].date, year, month)) continue;
@@ -205,7 +205,7 @@ function drawer() {
             else if(d.railways[i].service == '快速铁路' && best_service != '高速铁路') best_service = '快速铁路';
             else if(d.railways[i].service == '普速铁路' && best_service == '无') best_service = '普速铁路';
         }
-        console.log(best_service);
+        // console.log(best_service);
         if(best_service == '普速铁路') return "#440022";
         if(best_service == '快速铁路') return "#777700";
         if(best_service == '高速铁路') return "#447700";
