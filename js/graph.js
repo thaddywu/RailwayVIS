@@ -45,13 +45,12 @@ function Polar2cartesian(d, r){
 }
 
 
-let const_Vmain_scale = 1/1500;
-let Vmain_scale = const_Vmain_scale;
+let const_Vmain_scale = 4;
 
-var STANDARD_AVGPOS = [500, 400];     // 重心位置
+var STANDARD_AVGPOS = [];     // 重心位置
 var support_cityname = "乌鲁木齐";    // 选取方向固定城市名
-var STANDARD_ANGLE = 225/180*Math.PI; //  方向固定城市具体角度
-var h_scale = 4, w_scale = 4;         // 缩放比例
+var STANDARD_ANGLE = 210/180*Math.PI; //  方向固定城市具体角度
+var Vmain_scale = const_Vmain_scale;         // 缩放比例
 
 
 function set_pos(){
@@ -61,13 +60,14 @@ function set_pos(){
     //console.log("result = ", result);
     // console.log("result len = ", result.length);
     // console.log("point_num = ", tot_show_nodes);
+    STANDARD_AVGPOS = [lmargin+(rmargin-lmargin)/2, umargin+(dmargin-umargin)/2];
     let compute_position = mds.classic(result);
     // console.log(compute_position);
 
     // 这一段是为了固定重心
     for(let i = 0; i <tot_show_nodes; i++){
-        compute_position[i][0] /= w_scale;
-        compute_position[i][1] /= h_scale;
+        compute_position[i][0] /= Vmain_scale;
+        compute_position[i][1] /= Vmain_scale;
     }
 
     let avgpos = avgpos_compute(compute_position);
@@ -97,17 +97,6 @@ function set_pos(){
         if(i == support_cityid)
             console.log(cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]));
     }
-    
-
-
-    // let minh = 1e9, minw = 1e9;
-    // for(let i = 0; i < tot_show_nodes; i++){
-    //     minh = Math.min(compute_position[i][1], minh);
-    //     minw = Math.min(compute_position[i][0], minw);
-    // }
-    // for(let i = 0; i < tot_show_nodes; i++){
-    //     loc[i] = project_to_screen((compute_position[i][1]-minh)/1500, (compute_position[i][0] - minw)/3000);
-    // }
 
     for(let i = 0; i < tot_show_nodes; i++){
         loc[i] = [compute_position[i][1], compute_position[i][0]];
@@ -152,7 +141,15 @@ function Recovery() {  // 恢复正常视图
 
 function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
     function align_main() {
-
+        let maxw = 0, maxh = 0;
+        for(let i = 0; i < tot_show_nodes; i++){
+            maxh = Math.max(maxh, Math.abs(loc[i][0] - STANDARD_AVGPOS[1]));
+            maxw = Math.max(maxw, Math.abs(loc[i][1] - STANDARD_AVGPOS[0]));
+        }
+        console.log(maxw, maxh);
+        let tmp = Math.min((rmargin-lmargin)/2/maxw, (dmargin-umargin)/2/maxh);
+        Vmain_scale /= tmp;
+        Recovery();
     }
     function align_1() {
         let ID = select_id[0];

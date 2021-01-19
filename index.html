@@ -25,6 +25,7 @@
 <body>
 	<script src="js/main.js"></script>
 	<div id='container'>
+        <div id='tooltip'></div>
 		<svg></svg>
 <!--		<text id="text_mode"> Mode: 24h</text>-->
 <!--		<button id="switch_mode" onclick="update(true)"> Switch </button>-->
@@ -37,6 +38,8 @@
 		<input type="range" id="month" onchange="update()" min="1" max="12" value="1"/>
 		<button id="align" onclick="align_with_screen()"> Align with screen </button>
 		<button id="pause" onclick="pause()"> Pause </button>
+		<button id="undo" onclick="undo()"> Undo </button>
+
 	</div>
 
 </body>

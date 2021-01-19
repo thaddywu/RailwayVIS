@@ -8,6 +8,7 @@ let umargin = height * 0.1, dmargin = height * 0.9;
 
 let show_data_file = './json/tmp.json';
 let data_file = './json/schedulers.json';
+let network_data_file = './json/network.json';
 
 let tot_show_nodes = 0, show_links = [], show_nodes = []; // 要展示的城市编号为0~tot_show_nodes-1。show_links用来存储要展示的铁路, 从show_data_file里读入，预处理阶段存进来
 let cityname2id = {}, id2cityname = []; //{'重庆':0, '上海':1, ... }、['重庆', '上海', ...]
@@ -16,9 +17,10 @@ let real_position = []; //按照编号对应的经纬度，形如[ [106.549, 29.
 let tot_nodes, to = [], nxt = [], head = [], weight = [], tot_edges = 0; //用来存最短路建图的点数和邻接表
 let result = null; // result表示要传给图布局的结果(符合语义的最短路), 大小为tot_show_nodes*tot_show_nodes的二维数组
 let loc = null; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
-let link, node, text; // d3用来画图的东西
+let link, node, text_node; // d3用来画图的东西
 let mode = 0, time, year, month; // 交互的参数
 let tot_selected = 0, select_id = [];
+let ban = [];
 
 function screener() {
     // 根据时间把最短路的图建好，存在邻接表里
@@ -31,12 +33,27 @@ function screener() {
         return true;
     }
 
+    function belong(u, v, date1, railway){
+        if(date1 != railway['date']) return false;
+        for(let i=0; i<railway.route.length;i++){
+            if(u==railway.route[i]) return true;
+            if(v==railway.route[i]) return true;
+        }
+        console.log(2);
+        return false;
+    }
+
     tot_edges = 0;
     head = [];
     for(train_id in data1){
         let nn = data1[train_id].route.length;
         for(let i = 0; i < nn - 1; i++){
             if(comp(data1[train_id].date[i], year, month)) continue;
+            let flag = 0;
+            for(j=0;j<ban.length;j++){
+                if(belong(data1[train_id].route[i].city,data1[train_id].route[i+1].city,data1[train_id].date[i],data3[ban[j]])) flag=1;
+            }
+            if(flag) continue;
             let t1 = data1[train_id].route[i].departure;
             t1 = parseInt(t1.split(":")[0], [10])*60+parseInt(t1.split(":")[1], [10]);
             let t2 = data1[train_id].route[i+1].arrival;
@@ -69,6 +86,17 @@ function basic_configuration(svg) {
             // if (w < 40) return "#6b6882";
             // return "#725e82";
             return "#007777";
+        }
+
+        function get_railway_info(L) {
+            let content = "";
+            for(i=0;i<L.length;i++){
+                content += L[i].name + ':<br/><table>' +
+                    '<tr><td>铁路类型:</td><td>' + L[i].service +'</td></tr>' +
+                    '<tr><td>电气化:</td><td>' + L[i].electrification +'</td></tr>' +
+                    '<tr><td>开通时间:</td><td>' + L[i].date +'</td></tr></table><br/>'
+            }
+            return content;
         }
 
         function click_node(ID){
@@ -107,8 +135,32 @@ function basic_configuration(svg) {
             .attr("stroke-opacity", 0.3)
             .selectAll("line")
             .data(show_links)
-            .join("line");
-            // .attr("stroke-width", d => Math.sqrt(d.weight));
+            .join("line")
+            .attr("stroke-width", d => 8)
+            .on("mouseover", function (e, d) {// 显示tooltip
+                let tooltip= d3.select('#tooltip');
+                let content = get_railway_info(d.railways);
+                // content = '1';
+                tooltip.html(content)
+                    .style('position', 'absolute')
+                    .style("left",(loc[d.u][1]+loc[d.v][1])/2+"px")
+                    .style("top",(loc[d.u][0]+loc[d.v][0])/2+"px")
+                    .style('visibility', 'visible');
+            })
+            .on("mouseout", function (e, d) {// 隐藏
+                let tooltip= d3.select('#tooltip');
+                tooltip.style('visibility', 'hidden');
+            })
+            .on("dblclick", function (e, d) {
+                if(ban.length != 0) return;
+                for(i=0;i<d.railways.length;i++){
+                    ban.push(d.railways[i].name);
+                }
+                d3.select(this).attr('display', 'none');
+                screener();
+                cal_shortest_path();
+                view_show();
+            });
 
         // nodes
         node = svg.append("g")
@@ -134,7 +186,7 @@ function basic_configuration(svg) {
                 else if(ret==0) d3.select(this).attr('fill', getcolor());
             });
 
-        text = svg.append("g")
+        text_node = svg.append("g")
             .selectAll("text")
             .data(show_nodes)
             .join("text")
@@ -157,7 +209,8 @@ function drawer() {
         .duration(1500)
         .attr("cx", d => loc[d.id][1])
         .attr("cy", d => loc[d.id][0]);
-    text
+
+    text_node
         .transition()
         .duration(1500)
         .attr("x", d => loc[d.id][1])
@@ -186,6 +239,7 @@ function interactive_bar() {
     modify('month', 0.02, 0.3);
     modify('align', 0.04, 0.4);
     modify('pause', 0.12, 0.3);
+    modify('undo', 0.04, 0.5);
 }
 
 function draw_graph() {
@@ -218,7 +272,7 @@ function set_ui() {
         .style("font-family", fontFamily);
 }
 
-let data1 = null, data2 = null;
+let data1 = null, data2 = null, data3 = null;
 function data_prepare() {
     for(let city in data2.nodes){
         cityname2id[city] = tot_show_nodes;
@@ -228,8 +282,7 @@ function data_prepare() {
         real_position.push(data2.nodes[city]);
     }
     for(let i=0, len=data2.links.length; i<len; i++){
-        show_links.push({'u':cityname2id[data2.links[i][0]], 'v':cityname2id[data2.links[i][1]]});
-        //show_links.push({'v':cityname2id[data2.links[i][0]], 'u':cityname2id[data2.links[i][1]]});
+        show_links.push({'u':cityname2id[data2.links[i].u], 'v':cityname2id[data2.links[i].v], 'railways': data2.links[i].railways});
     }
     tot_nodes = tot_show_nodes;
     for(let train_id in data1){
@@ -300,20 +353,31 @@ function pause() {
     }
 }
 
+function undo() {
+    ban = [];
+    link.attr('display', 'block');
+    screener();
+    cal_shortest_path();
+    view_show();
+}
+
 function main() {
     set_ui();
     d3.json(data_file).then(function (DATA) {
         data1 = DATA;
         d3.json(show_data_file).then(function (DATA) {
             data2 = DATA;
-            data_prepare();
-            draw_graph();
-            intv = setInterval(() => {
-                update_month_year();
-                screener();
-                cal_shortest_path();
-                view_show();
-            }, 1000);
+            d3.json(network_data_file).then(function (DATA) {
+                data3 = DATA;
+                data_prepare();
+                draw_graph();
+                intv = setInterval(() => {
+                    update_month_year();
+                    screener();
+                    cal_shortest_path();
+                    view_show();
+                }, 1000);
+            });
         });
     });
 
