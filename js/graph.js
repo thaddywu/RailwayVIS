@@ -51,7 +51,6 @@ var Vmain_scale = const_Vmain_scale;         // 缩放比例
 var support_cityname2 = "哈尔滨";     // 决定是否翻转x的参考城市
 var support_cityname3 = "昆明";       // 决定是否翻转y的参考城市
 
-
 function set_pos(){
     // 一共有tot_show_nodes个点需要计算位置，标号为0-tot_show_nodes-1，两两的距离存在了result里
     // 如果需要的话，可以使用real_position数组，里面按标号存了实际的经纬度
@@ -79,7 +78,7 @@ function set_pos(){
 
     avgpos = avgpos_compute(compute_position);
 
-    // console.log("avgpos = ", avgpos);
+    //console.log("avgpos = ", avgpos);
 
     // 选取重心与某个特定城市方向不变 supportcityname
     // 对地图进行整个旋转
@@ -93,16 +92,14 @@ function set_pos(){
     let support_citypos2 = [compute_position[support_cityid2][0], compute_position[support_cityid2][1]];
     let support_citypos3 = [compute_position[support_cityid3][0], compute_position[support_cityid3][1]];
 
-    console.log(support_citypos2, support_citypos, support_citypos3);
+
     if(support_citypos2[0] < support_citypos[0]){
-        console.log(1)
         for(let i = 0; i < tot_show_nodes; i++){
             compute_position[i][0] = 2*avgpos[0] - compute_position[i][0];
         }
     }
 
     if(support_citypos3[1] < support_citypos2[1]){
-        console.log(2)
         for(let i = 0; i < tot_show_nodes; i++){
             compute_position[i][1] = 2*avgpos[1] - compute_position[i][1];
         }
