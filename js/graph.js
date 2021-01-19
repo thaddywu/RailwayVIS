@@ -16,24 +16,101 @@ function geographical_position(){
     }
 }
 
+function avgpos_compute(pos){
+    let sum_w = 0;
+    let sum_h = 0;
+
+    for(let i = 0; i < pos.length; i++){
+        sum_w += pos[i][0];
+        sum_h += pos[i][1];
+    }
+
+    let avgpos = [sum_w/pos.length, sum_h/pos.length];
+
+    return avgpos;
+}
+
+function cartesian2Polar(x, y){
+    let distance = Math.sqrt(x*x + y*y)
+    let radians = Math.atan2(y,x) //This takes y first
+    
+    let polarCoor = { distance:distance, radians:radians }
+    return polarCoor
+}
+
+function Polar2cartesian(d, r){
+    let x = d*Math.cos(r);
+    let y = d*Math.sin(r);
+    return {x: x, y: y}
+}
+
+
 let const_Vmain_scale = 1/1500;
 let Vmain_scale = const_Vmain_scale;
+
+var STANDARD_AVGPOS = [500, 400];     // 重心位置
+var support_cityname = "乌鲁木齐";    // 选取方向固定城市名
+var STANDARD_ANGLE = 225/180*Math.PI; //  方向固定城市具体角度
+var h_scale = 4, w_scale = 4;         // 缩放比例
+
+
 function set_pos(){
     // 一共有tot_show_nodes个点需要计算位置，标号为0-tot_show_nodes-1，两两的距离存在了result里
     // 如果需要的话，可以使用real_position数组，里面按标号存了实际的经纬度
     // 最后把结果像上面函数一样存进loc里就行
-    console.log("result = ", result);
+    //console.log("result = ", result);
     // console.log("result len = ", result.length);
     // console.log("point_num = ", tot_show_nodes);
-    compute_position = mds.classic(result);
+    let compute_position = mds.classic(result);
     // console.log(compute_position);
-    let minh = 1e9, minw = 1e9;
-    for(let i = 0; i < tot_show_nodes; i++){
-        minh = Math.min(compute_position[i][1], minh);
-        minw = Math.min(compute_position[i][0], minw);
+
+    // 这一段是为了固定重心
+    for(let i = 0; i <tot_show_nodes; i++){
+        compute_position[i][0] /= w_scale;
+        compute_position[i][1] /= h_scale;
     }
+
+    let avgpos = avgpos_compute(compute_position);
+    let bias = [STANDARD_AVGPOS[0] - avgpos[0], STANDARD_AVGPOS[1] - avgpos[1]];
+
+    for(let i = 0; i <tot_show_nodes; i++){
+        compute_position[i][0] += bias[0];
+        compute_position[i][1] += bias[1];
+    }
+
+    avgpos = avgpos_compute(compute_position);
+
+    console.log("avgpos = ", avgpos);
+
+    // 选取重心与某个特定城市方向不变 supportcityname
+    // 对地图进行整个旋转
+    let support_cityid = id2cityname.indexOf(support_cityname);
+    let support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
+    let now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
+    let angle_bias = STANDARD_ANGLE - now_support_cityangle;
+
     for(let i = 0; i < tot_show_nodes; i++){
-        loc[i] = project_to_screen((compute_position[i][1]-minh)/1500, (compute_position[i][0] - minw)/3000);
+        let polarpos = cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]);
+        let newpos = Polar2cartesian(polarpos.distance, polarpos.radians + angle_bias);
+        compute_position[i] = [newpos.x + avgpos[0], newpos.y + avgpos[1]];
+
+        if(i == support_cityid)
+            console.log(cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]));
+    }
+    
+
+
+    // let minh = 1e9, minw = 1e9;
+    // for(let i = 0; i < tot_show_nodes; i++){
+    //     minh = Math.min(compute_position[i][1], minh);
+    //     minw = Math.min(compute_position[i][0], minw);
+    // }
+    // for(let i = 0; i < tot_show_nodes; i++){
+    //     loc[i] = project_to_screen((compute_position[i][1]-minh)/1500, (compute_position[i][0] - minw)/3000);
+    // }
+
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc[i] = [compute_position[i][1], compute_position[i][0]];
     }
 }
 
