@@ -74,6 +74,11 @@ function screener() {
 
 function basic_configuration(svg) {
     //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
+    svg.append('g')
+        .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.4})`)
+        .append('text')
+        .attr('class', 'title')
+        .text('A Visualization of Inter City Accessibility Affected by Railway Construction in China');
 
     // if(mode == 0) { // 24h mode
     //
@@ -96,7 +101,7 @@ function basic_configuration(svg) {
                 content += L[i].name + ':<br/><table>' +
                     '<tr><td>铁路类型:</td><td>' + L[i].service +'</td></tr>' +
                     '<tr><td>电气化:</td><td>' + L[i].electrification +'</td></tr>' +
-                    '<tr><td>开通时间:</td><td>' + L[i].date +'</td></tr></table><br/>'
+                    '<tr><td>开通时间:</td><td>' + L[i].date +'</td></tr></table>'
             }
             return content;
         }
@@ -176,10 +181,34 @@ function basic_configuration(svg) {
             .on("mouseover", function (e, d) {// 鼠标悬停颜色变浅
                 d3.select(this)
                     .attr('opacity', 0.3);
+
+                if(select_id.length == 1) {
+                    let tooltip = d3.select('#tooltip');
+
+                    let content = "从 " + id2cityname[select_id[0]] +' 到 ' + id2cityname[d.id] + '<br/>需要'
+                     + Math.floor(result[select_id[0]][d.id]/60) + ' 小时 ' + Math.floor(result[select_id[0]][d.id]%60) + '分钟';
+                    // content = '1';
+                    tooltip.html(content)
+                        .style('position', 'absolute')
+                        .style("left", (lmargin + (rmargin - lmargin) * 0.7) + "px")
+                        .style("top", (umargin) + "px")
+                        .style('visibility', 'visible');
+
+                    let circle = d3.select('#contour');
+                    circle
+                        .attr('cx', loc[select_id[0]][1])
+                        .attr('cy', loc[select_id[0]][0])
+                        .attr('r', Math.sqrt((loc[select_id[0]][0]-loc[d.id][0])**2+(loc[select_id[0]][1]-loc[d.id][1])**2))
+                        .attr('display', 'null')
+                }
             })
             .on("mouseout", function (e, d) {// 鼠标移出颜色恢复
                 d3.select(this)
                     .attr('opacity', 1.0);
+                let tooltip= d3.select('#tooltip');
+                tooltip.style('visibility', 'hidden');
+                let circle = d3.select('#contour');
+                circle.attr('display', 'none');
             })
             .on("click", function (e, d) {
                 let ret = click_node(d.id);
@@ -218,7 +247,7 @@ function drawer() {
         .attr("stroke", d => get_link_color(d))
         .attr("stroke-opacity", 0.3)
         .transition()
-        .duration(1500)
+        .duration(1200)
         .attr("x1", d => loc[d.u][1])
         .attr("y1", d => loc[d.u][0])
         .attr("x2", d => loc[d.v][1])
@@ -226,15 +255,15 @@ function drawer() {
 
     node
         .transition()
-        .duration(1500)
+        .duration(1200)
         .attr("cx", d => loc[d.id][1])
         .attr("cy", d => loc[d.id][0]);
 
     text_node
         .transition()
-        .duration(1500)
-        .attr("x", d => loc[d.id][1])
-        .attr("y", d => loc[d.id][0]);
+        .duration(1200)
+        .attr("x", d => (loc[d.id][1]-15))
+        .attr("y", d => (loc[d.id][0]-10));
 }
 
 function interactive_bar() {
