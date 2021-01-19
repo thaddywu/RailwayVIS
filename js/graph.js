@@ -89,17 +89,21 @@ function set_pos(){
     let support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
     let now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
 
+    let angle_bias = STANDARD_ANGLE - now_support_cityangle;
+
+    for(let i = 0; i < tot_show_nodes; i++){
+        let polarpos = cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]);
+        let newpos = Polar2cartesian(polarpos.distance, polarpos.radians + angle_bias);
+        compute_position[i] = [newpos.x + avgpos[0], newpos.y + avgpos[1]];
+
+        // if(i == support_cityid)
+        //     console.log(cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]));
+    }
+
     let support_citypos2 = [compute_position[support_cityid2][0], compute_position[support_cityid2][1]];
     let support_citypos3 = [compute_position[support_cityid3][0], compute_position[support_cityid3][1]];
 
-
-    if(support_citypos2[0] < support_citypos[0]){
-        for(let i = 0; i < tot_show_nodes; i++){
-            compute_position[i][0] = 2*avgpos[0] - compute_position[i][0];
-        }
-    }
-
-    if(support_citypos3[1] < support_citypos2[1]){
+    if(support_citypos2[1] > support_citypos3[1]){
         for(let i = 0; i < tot_show_nodes; i++){
             compute_position[i][1] = 2*avgpos[1] - compute_position[i][1];
         }
@@ -108,7 +112,7 @@ function set_pos(){
     support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
     now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
 
-    let angle_bias = STANDARD_ANGLE - now_support_cityangle;
+    angle_bias = STANDARD_ANGLE - now_support_cityangle;
 
     for(let i = 0; i < tot_show_nodes; i++){
         let polarpos = cartesian2Polar(compute_position[i][0] - avgpos[0], compute_position[i][1] - avgpos[1]);

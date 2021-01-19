@@ -112,22 +112,23 @@ function basic_configuration(svg) {
                     view_show(); return 0;
                 }
                 else{
-                    tot_selected++; select_id.push(ID);
+                    node.attr('fill', d => getcolor());
+                    select_id[0]=ID;
                     view_show(); return 1;
                 }
             }
-            else{
-                if(select_id[0] == ID){
-                    let tmp = select_id[0];
-                    select_id[0] = select_id[1];
-                    select_id[1] = tmp;
-                }
-                if(select_id[1] == ID){
-                    select_id.pop(); tot_selected--;
-                    view_show(); return 0;
-                }
-            }
-            return 2;
+            // else{
+            //     if(select_id[0] == ID){
+            //         let tmp = select_id[0];
+            //         select_id[0] = select_id[1];
+            //         select_id[1] = tmp;
+            //     }
+            //     if(select_id[1] == ID){
+            //         select_id.pop(); tot_selected--;
+            //         view_show(); return 0;
+            //     }
+            // }
+            // return 2;
         }
 
         // links
@@ -206,9 +207,9 @@ function drawer() {
             else if(d.railways[i].service == '普速铁路' && best_service == '无') best_service = '普速铁路';
         }
         // console.log(best_service);
-        if(best_service == '普速铁路') return "#440022";
-        if(best_service == '快速铁路') return "#777700";
-        if(best_service == '高速铁路') return "#447700";
+        if(best_service == '普速铁路') return "#660022";
+        if(best_service == '快速铁路') return "#776600";
+        if(best_service == '高速铁路') return "#449944";
         return "#ffffff";
         // return "#d2691e";
     }
