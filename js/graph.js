@@ -52,7 +52,8 @@ var STANDARD_AVGPOS = [500, 400];     // 重心位置
 var support_cityname = "乌鲁木齐";    // 选取方向固定城市名
 var STANDARD_ANGLE = 225/180*Math.PI; //  方向固定城市具体角度
 var h_scale = 4, w_scale = 4;         // 缩放比例
-
+var support_cityname2 = "哈尔滨";     // 决定是否翻转x的参考城市
+var support_cityname3 = "昆明";       // 决定是否翻转y的参考城市
 
 function set_pos(){
     // 一共有tot_show_nodes个点需要计算位置，标号为0-tot_show_nodes-1，两两的距离存在了result里
@@ -80,13 +81,36 @@ function set_pos(){
 
     avgpos = avgpos_compute(compute_position);
 
-    console.log("avgpos = ", avgpos);
+    //console.log("avgpos = ", avgpos);
 
     // 选取重心与某个特定城市方向不变 supportcityname
     // 对地图进行整个旋转
     let support_cityid = id2cityname.indexOf(support_cityname);
+    let support_cityid2 = id2cityname.indexOf(support_cityname2);
+    let support_cityid3 = id2cityname.indexOf(support_cityname3);
+
     let support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
     let now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
+
+    let support_citypos2 = [compute_position[support_cityid2][0], compute_position[support_cityid2][1]];
+    let support_citypos3 = [compute_position[support_cityid3][0], compute_position[support_cityid3][1]];
+
+    
+    if(support_citypos2[0] < support_citypos[0]){
+        for(let i = 0; i < tot_show_nodes; i++){
+            compute_position[i][0] = 2*avgpos[0] - compute_position[i][0];
+        }
+    }
+
+    if(support_citypos3[1] < support_citypos2[1]){
+        for(let i = 0; i < tot_show_nodes; i++){
+            compute_position[i][1] = 2*avgpos[1] - compute_position[i][1];
+        }
+    }
+
+    support_citypos = [compute_position[support_cityid][0], compute_position[support_cityid][1]];
+    now_support_cityangle = cartesian2Polar(support_citypos[0] - avgpos[0], support_citypos[1] - avgpos[1]).radians;
+
     let angle_bias = STANDARD_ANGLE - now_support_cityangle;
 
     for(let i = 0; i < tot_show_nodes; i++){
