@@ -149,7 +149,7 @@ function basic_configuration(svg) {
                 // content = '1';
                 tooltip.html(content)
                     .style('position', 'absolute')
-                    .style("left",(lmargin+(rmargin-lmargin)*0.7)+"px")
+                    .style("left",(lmargin+(rmargin-lmargin)*0.8)+"px")
                     .style("top",(umargin)+"px")
                     .style('visibility', 'visible');
             })
@@ -238,11 +238,11 @@ function drawer() {
         // console.log(best_service);
         if(best_service == '普速铁路') return "#660022";
         if(best_service == '快速铁路') return "#776600";
-        if(best_service == '高速铁路') return "#449944";
+        if(best_service == '高速铁路') return "#44cc44";
         return "#ffffff";
         // return "#d2691e";
     }
-
+    console.log(link);
     link
         .attr("stroke", d => get_link_color(d))
         .attr("stroke-opacity", 0.3)
@@ -307,7 +307,9 @@ function draw_graph() {
 
     graph_layout_algorithm();  // 根据result, 计算返回每个点的坐标 存在某个数组里，比如loc
 
-    drawer(); // 绘制links, nodes和text的位置
+    align_with_screen();
+
+    // drawer(); // 绘制links, nodes和text的位置
 }
 
 function set_ui() {
@@ -350,6 +352,10 @@ function data_prepare() {
     for(i=0; i<tot_show_nodes; i++){
         result[i] = new Array(tot_show_nodes);
     }
+
+
+    year = document.getElementById('year').value;
+    month = document.getElementById('month').value;
 }
 
 function update() {
