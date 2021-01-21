@@ -190,7 +190,7 @@ function basic_configuration(svg) {
                     // content = '1';
                     tooltip.html(content)
                         .style('position', 'absolute')
-                        .style("left", (lmargin + (rmargin - lmargin) * 0.7) + "px")
+                        .style("left", (lmargin + (rmargin - lmargin) * 0.8) + "px")
                         .style("top", (umargin) + "px")
                         .style('visibility', 'visible');
 
@@ -282,13 +282,15 @@ function interactive_bar() {
         txt.style.display = "none";
     }
 
-    modify('text_year', 0.02, 0.15);
-    modify('year', 0.02, 0.2);
-    modify('text_month', 0.02, 0.25);
-    modify('month', 0.02, 0.3);
-    modify('align', 0.04, 0.4);
-    modify('pause', 0.12, 0.3);
-    modify('undo', 0.04, 0.5);
+    // modify('text_year', 0.02, 0.15);
+    // modify('year', 0.02, 0.2);
+    // modify('text_month', 0.02, 0.25);
+    // modify('month', 0.02, 0.3);
+    // modify('align', 0.04, 0.4);
+    // modify('pause', 0.12, 0.3);
+    // modify('undo', 0.04, 0.5);
+
+    timeline_functions = addDateParam('timeline', '对应月份', 1971*12+1, 2020*12+12, 1971*12+1, null);
 }
 
 function draw_graph() {
@@ -297,19 +299,18 @@ function draw_graph() {
         .attr('width', width)
         .attr('height', height);
 
+    interactive_bar(); // 交互模块
+
     screener(); // 将数据预处理，并依照参数筛掉一些铁路。根据参数，将建好的边存进links和nodes里
 
     basic_configuration(svg); // 基本的布局设置，依赖于数据筛选器的结果
-    
-    interactive_bar(); // 交互模块
 
     cal_shortest_path(); // 根据links和nodes里的图，计算最短路, 并将结果以二维矩阵的形式存进result里
 
     graph_layout_algorithm();  // 根据result, 计算返回每个点的坐标 存在某个数组里，比如loc
 
-    align_with_screen();
+    align_with_screen(); // 绘制links, nodes和text的位置，并align
 
-    // drawer(); // 绘制links, nodes和text的位置
 }
 
 function set_ui() {
@@ -354,51 +355,45 @@ function data_prepare() {
     }
 
 
-    year = document.getElementById('year').value;
-    month = document.getElementById('month').value;
+    // year = document.getElementById('year').value;
+    // month = document.getElementById('month').value;
 }
 
-function update() {
-    year = document.getElementById('year').value;
-    document.getElementById('text_year').textContent = 'year: ' + year;
-    month = document.getElementById('month').value;
-    document.getElementById('text_month').textContent = 'month: ' + month;
-
-    screener();
-    cal_shortest_path();
-    view_show();
-}
+// function update() {
+//     year = document.getElementById('year').value;
+//     document.getElementById('text_year').textContent = 'year: ' + year;
+//     month = document.getElementById('month').value;
+//     document.getElementById('text_month').textContent = 'month: ' + month;
+//
+//     screener();
+//     cal_shortest_path();
+//     view_show();
+// }
 
 function update_month_year(){
-    year = document.getElementById('year').value;
-    month = document.getElementById('month').value;
-    // if(year<2008) year++;
-    // else {
-    //     if (month != 12) month++;
-    //     else {
-    //         if (year == 2020) pause();
-    //         else {
-    //             month = 1;
-    //             year++;
-    //         }
-    //     }
-    // }
-    if(year<2020) year++;
-    else pause();
-    document.getElementById('month').value = month;
-    document.getElementById('year').value = year;
-    document.getElementById('text_year').textContent = 'year: ' + year;
-    document.getElementById('text_month').textContent = 'month: ' + month;
+    // year = document.getElementById('year').value;
+    // month = document.getElementById('month').value;
+    // if(year<2020) year++;
+    // else pause();
+    // document.getElementById('month').value = month;
+    // document.getElementById('year').value = year;
+    // document.getElementById('text_year').textContent = 'year: ' + year;
+    // document.getElementById('text_month').textContent = 'month: ' + month;
+    let v_old = timeline_functions['getv']();
+    console.log(v_old, v_old/12, v_old%12);
+    let v_new = v_old+12;
+    if(v_new >= 2020*12+12) {v_new = 2020*12+12;pause();}
+    timeline_functions['setv'](v_new);
 }
 
 function pause() {
     if(intv){
-        document.getElementById('pause').textContent = ' Resume ';
+        document.getElementById('pause').src = 'icon/play.jpg';
         clearInterval(intv);
         intv=undefined;
     }
     else{
-        document.getElementById('pause').textContent = ' Pause ';
+        document.getElementById('pause').src = 'icon/pause.jpg';
         intv = setInterval(() => {
             update_month_year();
             screener();

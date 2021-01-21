@@ -9,6 +9,7 @@
 	<script src="js/numeric.min.js"></script>
 	<script src="js/mds.js"></script>
 	<script src="js/graph.js"></script>
+	<script src="js/params.js"></script>
 	<style>
 		#text{
 			text-align: center;
@@ -23,25 +24,29 @@
 </head>
 
 <body>
+
 	<script src="js/main.js"></script>
+
 	<div id='container'>
         <div id='tooltip'></div>
 		<svg>
 			<circle id = "contour" cx="0" cy="0" r="0" stroke="black" stroke-width="2" fill="none"/>
 		</svg>
-<!--		<text id="text_mode"> Mode: 24h</text>-->
-<!--		<button id="switch_mode" onclick="update(true)"> Switch </button>-->
-<!--		<text id="text_time"> departure time: </text>-->
-<!--		<input id="departure_time_hour" type="text" onchange="update(false)" min="0" max="23" value="0">-->
-<!--		<input id="departure_time_minute" type="text" onchange="update(false)" min="0" max="59" value="00">-->
-		<text id="text_year"> year: 1971 </text>
-		<input type="range" id="year" onchange="update()" min="1971" max="2020" value="1971"/>
-		<text id="text_month"> month: 1 </text>
-		<input type="range" id="month" onchange="update()" min="1" max="12" value="1"/>
-		<button id="align" onclick="align_with_screen()"> Align with screen </button>
-		<button id="pause" onclick="pause()"> Pause </button>
-		<button id="undo" onclick="undo()"> Undo </button>
+<!--		<text id="text_year"> year: 1971 </text>-->
+<!--		<input type="range" id="year" onchange="update()" min="1971" max="2020" value="1971"/>-->
+<!--		<text id="text_month"> month: 1 </text>-->
+<!--		<input type="range" id="month" onchange="update()" min="1" max="12" value="1"/>-->
+<!--		<button id="align" onclick="align_with_screen()"> Align with screen </button>-->
+<!--		<button id="undo" onclick="undo()"> Undo </button>-->
+	</div>
 
+	<div id="bottombar-container">
+<!--		<p class="bottombar-title">Visualization for famous faculties in universities</p>-->
+<!--		<div id="data-intro" >-->
+<!--			<p>256 nodes, 846 edges and 2134 faculties</p>-->
+<!--			<p><b>mouse wheel</b> and <b>drag</b> for zoom and navigation</p>-->
+<!--			<p><b>click on nodes :</b> blue(in and out), green(out), red(in)</p>-->
+<!--		</div>-->
 	</div>
 
 </body>
