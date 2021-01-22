@@ -131,7 +131,7 @@ function set_pos(){
 // 下面开始是关于交互部分的位置计算与显示
 function view_show(){
     if(tot_selected == 0){
-        Recovery();
+        Viewmain();
     }
     else if(tot_selected == 1){
         View1(select_id[0]);
@@ -139,6 +139,14 @@ function view_show(){
     else{
         View2(select_id[0], select_id[1]);
     }
+}
+
+function Viewmain(){
+    graph_layout_algorithm();
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc_after_trans[i] = pos_after_transform(lasttrans, loc[i]);
+    }
+    drawer(false);
 }
 
 let const_V1_scale = 1;
@@ -152,8 +160,9 @@ function View1(ID) {  // 第一视图:有一个点在中间
         let now_dis = result[i][ID];
         loc[i][0] = loc[ID][0] + (real_position[ID][1] - real_position[i][1])*(now_dis/real_dis) * V1_scale;
         loc[i][1] = loc[ID][1] + (real_position[i][0] - real_position[ID][0])*(now_dis/real_dis) * V1_scale;
+        loc_after_trans[i] = loc[i];
     }
-    drawer()
+    drawer(true);
 }
 function View2(ID1, ID2) {  // 第二视图:选了两个点
     // console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
@@ -161,7 +170,10 @@ function View2(ID1, ID2) {  // 第二视图:选了两个点
 function Recovery() {  // 恢复正常视图
     // console.log("Recovery");
     graph_layout_algorithm();
-    drawer();
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc_after_trans[i] = loc[i];
+    }
+    drawer(true);
 }
 
 function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
@@ -195,4 +207,8 @@ function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
 
     if(tot_selected == 0) align_main();
     else if(tot_selected == 1) align_1();
+
+    for(let i = 0; i < tot_show_nodes; i++){
+        loc_after_trans[i] = loc[i];
+    }
 }
