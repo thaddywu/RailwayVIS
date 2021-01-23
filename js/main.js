@@ -62,6 +62,16 @@ function screener() {
         }
     }
 
+    for(let j=0; j<show_links.length; j++){
+        show_links[j].best_service = '无';
+        for(let i=0;i<show_links[j].railways.length;i++) {
+            if (comp(show_links[j].railways[i].date, year, month)) continue;
+            if (show_links[j].railways[i].service == '高速铁路') show_links[j].best_service = '高速铁路';
+            else if(show_links[j].railways[i].service == '快速铁路' && show_links[j].best_service != '高速铁路') show_links[j].best_service = '快速铁路';
+            else if(show_links[j].railways[i].service == '普速铁路' && show_links[j].best_service == '无') show_links[j].best_service = '普速铁路';
+        }
+    }
+
     // //直接根据地理位置建边，仅用于test
     // for(i = 0; i < tot_show_nodes; i++){
     //     for (j = i+1; j < tot_show_nodes; j++){
@@ -119,7 +129,7 @@ function basic_configuration(svg) {
         .selectAll("line")
         .data(show_links)
         .join("line")
-        .attr("stroke-width", d => 5)
+        .attr("stroke-width", d => 2)
         .on("mouseover", function (e, d) {// 显示tooltip
             let tooltip= d3.select('#tooltip');
             let content = get_railway_info(d.railways);
@@ -151,13 +161,13 @@ function basic_configuration(svg) {
         .data(show_nodes)
         .join("circle")
         .attr("r", function (d) {
-            if(d.level == 1) return 10;
-            else return 5;
+            if(d.level == 1) return 6;
+            else return 3;
         })
         .attr("stroke", "#000000")
         .attr("stroke-width", function (d) {
-            if(d.level == 1) return 3;
-            else return 2;
+            if(d.level == 1) return 1;
+            else return 0.5;
         })
         .attr("fill", "#ffffff")
         .attr("status", 0)
@@ -219,21 +229,11 @@ function basic_configuration(svg) {
 }
 
 function drawer(reset_zoom) {
-    // console.log(link, show_links, loc);
     function get_link_color(d) {
-        // console.log(d);
-        best_service = '无';
-        for(i=0;i<d.railways.length;i++) {
-            if (comp(d.railways[i].date, year, month)) continue;
-            if (d.railways[i].service == '高速铁路') best_service = '高速铁路';
-            else if(d.railways[i].service == '快速铁路' && best_service != '高速铁路') best_service = '快速铁路';
-            else if(d.railways[i].service == '普速铁路' && best_service == '无') best_service = '普速铁路';
-        }
-        // console.log(best_service);
-        if(best_service == '普速铁路') return "#DD2222";
-        if(best_service == '快速铁路') return "#E6E61A";
-        if(best_service == '高速铁路') return "#11EE3D";
-        return "#ffffff";
+        if(d.best_service == '普速铁路') return "#808080";
+        if(d.best_service == '快速铁路') return "#A2795E";
+        if(d.best_service == '高速铁路') return "#BB4444";
+        return "#ffffff"; // 应该不会显示白色的了
         // return "#d2691e";
     }
     if(reset_zoom) {
@@ -243,6 +243,10 @@ function drawer(reset_zoom) {
             .duration(750)
             .call(zoom.transform, d3.zoomIdentity.scale(1));
         link
+            .attr('display', d => function (d) {
+                if(d.best_service == '无') return "none";
+                return "null";
+            })
             .attr("stroke", d => get_link_color(d))
             .attr("stroke-opacity", 0.6)
             .transition()
@@ -259,11 +263,15 @@ function drawer(reset_zoom) {
         text_node
             .transition()
             .duration(1200)
-            .attr("x", d => (loc[d.id][1] - 15))
-            .attr("y", d => (loc[d.id][0] - 10));
+            .attr("x", d => (loc[d.id][1] - 13))
+            .attr("y", d => (loc[d.id][0] - 12));
     }
     else{
         link
+            .attr('display', d => function (d) {
+                if(d.best_service == '无') return "none";
+                return "null";
+            })
             .attr("stroke", d => get_link_color(d))
             .attr("stroke-opacity", 0.6)
             .transition()
@@ -280,8 +288,8 @@ function drawer(reset_zoom) {
         text_node
             .transition()
             .duration(1200)
-            .attr("x", d => (loc_after_trans[d.id][1] - 15))
-            .attr("y", d => (loc_after_trans[d.id][0] - 10));
+            .attr("x", d => (loc_after_trans[d.id][1] - 13))
+            .attr("y", d => (loc_after_trans[d.id][0] - 12));
     }
 
 }
@@ -487,3 +495,43 @@ function main() {
 }
 
 main();
+
+//下面是一些关于Timeline的附加信息的东西，还没调通，先注释掉
+
+// svg = d3.select('#container')
+//         .select('svg')
+// data = [{  name: "CA",
+//   '<10': 5038433,
+//   '10-19': 5170341,
+//   '20-29': 5809455,
+//   '30-39': 5354112,
+//   '40-49': 5179258,
+//   '50-59': 5042094,
+//   '60-69': 3737461,
+//   '70-79': 2011678,
+//   '≥80': 1311374,
+//   'total': 38654206}]
+//     svg.append("g")
+//     .selectAll("g")
+//     .data(series)
+//     .join("g")
+//       .attr("fill", d => color(d.key))
+//     .selectAll("rect")
+//     .data(d => d)
+//     .join("rect")
+//       .attr("x", (d, i) => x(d.data.name))
+//       .attr("y", d => y(d[1]))
+//       .attr("height", d => y(d[0]) - y(d[1]))
+//       .attr("width", x.bandwidth())
+//     .append("title")
+//       .text(d => `${d.data.name} ${d.key}
+// ${formatValue(d.data[d.key])}`);
+//
+//   svg.append("g")
+//       .call(xAxis);
+//
+//   svg.append("g")
+//       .call(yAxis);
+//
+//   return svg.node();
+// }
