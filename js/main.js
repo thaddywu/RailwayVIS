@@ -45,6 +45,78 @@ function set_ui() {
     // text_opacity_normal = 0.6;
 }
 
+function legend(svg) {
+    lgdGroup = svg.append('g')
+        .attr('class', 'lgdGroup')
+    
+    function get_color(item) {
+        if(item == '普速铁路') return "#808080";
+        if(item == '快速铁路') return "#A2795E";
+        if(item == '高速铁路') return "#BB4444";
+        return "#808080";
+    }
+    function get_radius(item) {
+        if(item == '普通地级市') return 3;
+        return 6;
+    }
+    function get_opacity(item) {
+        if(item == '普通地级市') return 0;
+        if(item == '省会及直辖市') return 0;
+        return 1;
+    }
+    function get_x(i) {
+        return rmargin * 0.9
+    }
+    function get_y(i) {
+        return umargin * 1.5 + 15 * i
+    }
+
+    lgdCons = ['普速铁路', '快速铁路', '高速铁路', '省会及直辖市', '普通地级市']
+    let lgd = svg.append('g').attr('id', 'lgd');
+
+    let ent = lgd.selectAll('lgd-item')
+        .data(lgdCons).enter()
+        .append('g')
+        .attr('class', 'lgd-item');
+    
+    ent.append('line')
+        .attr('x1', (d, i) => get_x(i))
+        .attr('y1', (d, i) => get_y(i))
+        .attr('x2', (d, i) => get_x(i) + 30)
+        .attr('y2', (d, i) => get_y(i))
+        .attr('stroke', (d, i) => get_color(d))
+        .attr('opacity', (d, i) => get_opacity(d))
+
+    ent.append('circle')
+        .attr('cx', (d, i) => get_x(i) + 15)
+        .attr('cy', (d, i) => get_y(i))
+        .attr('r', (d, i) => get_radius(d))
+        .attr('stroke', (d, i) => get_color(d))
+        .attr('fill', '#fff')
+
+    ent.append('text')
+        .attr('x', (d, i) => get_x(i) + 32)
+        .attr('y', (d, i) => get_y(i))
+        .attr('dy', '.4em')
+        .attr('fill', '#444')
+        .style('font-size', '13px')
+        .style('cursor', 'pointer')
+        .text(d => d)
+
+    /* boundray box.
+    nItems = lgdCons.length
+    lgd.append('g').append('rect')
+        .attr('x', get_x(0) - 15)
+        .attr('y', get_y(-1))
+        .attr('stroke-width', 1)
+        .attr('width', 160)
+        .attr('height', get_y(nItems) - get_y(-1))
+        .attr('stroke', '#808080')
+        .attr('fill', 'none')
+    */
+
+}
+
 function comp(str, yy, mm) { // 判断str所对应的字符串是否在yy.mm之后
     let LL = str.split('.');
     if(parseInt(LL[0]) != yy) return parseInt(LL[0]) > yy;
@@ -115,7 +187,7 @@ function selected(ID) {
 function basic_configuration(svg) {
     //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
     svg.append('g')
-        .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.4})`)
+        .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.7})`)
         .append('text')
         .attr('class', 'title')
         .text('A Visualization of Inter City Accessibility Affected by Railway Construction in China');
@@ -455,6 +527,8 @@ function draw_graph() {
         .call(zoom);
 
     interactive_bar(); // 交互模块
+
+    legend(svg); // 图例模块，不可交互
 
     screener(); // 将数据预处理，并依照参数筛掉一些铁路。根据参数，将建好的边存进links和nodes里
 
