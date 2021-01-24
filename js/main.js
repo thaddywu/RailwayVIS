@@ -187,7 +187,7 @@ function selected(ID) {
 function basic_configuration(svg) {
     //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
     svg.append('g')
-        .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.4})`)
+        .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.7})`)
         .append('text')
         .attr('class', 'title')
         .text('A Visualization of Inter City Accessibility Affected by Railway Construction in China');
