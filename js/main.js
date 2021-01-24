@@ -158,7 +158,7 @@ function basic_configuration(svg) {
         // .attr("stroke", "#e4c6d0")
         .selectAll("line")
         .data(show_links)
-        .join("line")
+        .join("path")
         .attr("stroke-width", d => 2)
         .on("mouseover", function (e, d) {// 显示tooltip
             let tooltip= d3.select('#tooltip');
@@ -268,10 +268,16 @@ function reset_zoom() {
         .call(zoom.transform, d3.zoomIdentity.scale(1));
 }
 
-function sleep(delay) {
-    let start = (new Date()).getTime();
-    while((new Date()).getTime() - start < delay) {}
-}
+String.prototype.format = function () {
+    var values = arguments;
+    return this.replace(/\{(\d+)\}/g, function (match, index) {
+        if (values.length > index) {
+            return values[index];
+        } else {
+            return "";
+        }
+    });
+};
 
 function drawer(need_transition) {
     function get_link_color(service) {
@@ -281,6 +287,30 @@ function drawer(need_transition) {
         return "#ffffff"; // 应该不会显示白色的了
         // return "#d2691e";
     }
+    function crossproduct(x1,y1,x2,y2) {
+        return x1*y2-y1*x2;
+    }
+    function get_xy(u, v){ // 计算边(u,v)的三次贝塞尔曲线u所在一侧的控制点（相对位置）
+        let line_cnt=0, angle_sum=0;
+        for(let i=0;i<show_links.length;i++){
+            let tmp=-1;
+            if(show_links[i].u == u) tmp = show_links[i].v;
+            else if(show_links[i].v == u) tmp = show_links[i].u;
+            // console.log(u,v,tmp);
+            if(tmp==-1||tmp==v||show_links[i].best_service=='无') continue;
+            line_cnt++;
+            angle_sum+=Math.atan2(display_loc[tmp][0]-display_loc[u][0],display_loc[tmp][1]-display_loc[u][1]);
+        }
+        if(line_cnt==0) return [0,0];
+        let angle = angle_sum / line_cnt;
+        let angle_v = Math.atan2(display_loc[v][1]-display_loc[u][1],display_loc[v][1]-display_loc[u][1]);
+        // 判断是否要转180度
+        // return [angle, angle_v];
+        if(Math.PI/2<Math.abs(angle-angle_v) && Math.abs(angle-angle_v)<Math.PI*3/2){
+            angle = Math.PI+angle;
+        }
+        return [30*Math.cos(angle), 30*Math.sin(angle)];
+    }
 
     let display_loc = loc_after_trans;
     // for(let i=0;i<tot_show_nodes;i++){
@@ -288,17 +318,32 @@ function drawer(need_transition) {
     //         if(display_loc[i][0]-display_loc[j][0])
     //     }
     // }
-
     link
         .attr('display', function (d) {if(d.best_service == '无') return "none"; return "null";})
         .attr("stroke", d => get_link_color(d.best_service))
         .attr("stroke-opacity", 0.6)
+        .attr('fill', "none")
         .transition()
         .duration(function () {if(need_transition) return 1200; else return 0;})
-        .attr("x1", d => display_loc[d.u][1])
-        .attr("y1", d => display_loc[d.u][0])
-        .attr("x2", d => display_loc[d.v][1])
-        .attr("y2", d => display_loc[d.v][0]);
+        .attr("d", function (d) {
+            let A1 = get_xy(d.u, d.v);
+            let A2 = get_xy(d.v, d.u);
+
+            let str="M {0} {1} c {2} {3}, {4} {5}, {6} {7}".format(
+                display_loc[d.u][1], display_loc[d.u][0],
+                // display_loc[d.u][1], display_loc[d.u][0],
+                // display_loc[d.v][1], display_loc[d.v][0],
+                // display_loc[d.v][1], display_loc[d.v][0]
+                A1[0], A1[1],
+                A2[0], A2[1],
+                display_loc[d.v][1]-display_loc[d.u][1], display_loc[d.v][0]-display_loc[d.u][0],
+            ) ;
+            return str;
+        });
+        // .attr("x1", d => display_loc[d.u][1])
+        // .attr("y1", d => display_loc[d.u][0])
+        // .attr("x2", d => display_loc[d.v][1])
+        // .attr("y2", d => display_loc[d.v][0]);
 
     node
         .attr("r", function (d) {if(d.level == 1) return 6; else return 3;})
