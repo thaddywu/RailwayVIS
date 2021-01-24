@@ -96,7 +96,7 @@ function addFloatParam(name, description, min_value, max_value, default_value, c
 }
 
 function addDateParam(name, description, min_value, max_value, default_value, callback) {
-    d3.select('#bottombar-container')
+    d3.select('#bottombar-container1')
     .append('div')
     .classed('param-container', true)
     .html(`
@@ -203,15 +203,17 @@ function addDateParam(name, description, min_value, max_value, default_value, ca
 }
 
 function addSelectParam(name, description, value_list, default_value, callback) {
-    let container = d3.select('#bottombar-container')
+    let container = d3.select('#bottombar-container2')
     .append('div')
-    .classed('param-container', true)
-
-    if (description != '') {
-        container.append('p')
-            .classed('param-title', true)
-            .html(description)
-    }
+    // .classed('param-container', true)
+        .attr('id', name)
+    // .attr('top', 0)
+    //     .attr('left', 1000)
+    //     .attr('width', 200)
+    .html(`
+        <p class="param-title" id="${name}-param-title">${description}</p>
+        </p>
+    `)
 
 
     let options = {}

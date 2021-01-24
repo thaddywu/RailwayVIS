@@ -34,7 +34,7 @@ function set_ui() {
         .style("font-family", fontFamily);
 
     //显示参数设计
-    text_opacity_normal = 0.6;
+    text_opacity_normal = 0.5;
     text_opacity_mouseon = 1.0;
     node_stroke_opacity_normal = 0.6;
     node_stroke_opacity_mouseon = 1.0;
@@ -235,11 +235,12 @@ function basic_configuration(svg) {
         .on("mouseover", function (e, d) {// 显示tooltip
             let tooltip= d3.select('#tooltip');
             let content = get_railway_info(d.railways);
-            // content = '1';
             tooltip.html(content)
                 .style('position', 'absolute')
-                .style("left",(lmargin+(rmargin-lmargin)*0.8)+"px")
-                .style("top",(umargin)+"px")
+                // .style("left",(lmargin+(rmargin-lmargin)*0.8)+"px")
+                // .style("top",(umargin)+"px")
+                .style("left",e.clientX+5+"px")
+                .style("top",e.clientY+5+"px")
                 .style('visibility', 'visible');
         })
         .on("mouseout", function (e, d) {// 隐藏
@@ -287,8 +288,10 @@ function basic_configuration(svg) {
                 // content = '1';
                 tooltip.html(content)
                     .style('position', 'absolute')
-                    .style("left", (lmargin + (rmargin - lmargin) * 0.8) + "px")
-                    .style("top", (umargin) + "px")
+                    // .style("left", (lmargin + (rmargin - lmargin) * 0.8) + "px")
+                    // .style("top", (umargin) + "px")
+                    .style("left",e.clientX+5+"px")
+                    .style("top",e.clientY+5+"px")
                     .style('visibility', 'visible');
 
                 let circle = d3.select('#contour');
@@ -375,13 +378,14 @@ function drawer(need_transition) {
         }
         if(line_cnt==0) return [0,0];
         let angle = angle_sum / line_cnt;
-        let angle_v = Math.atan2(display_loc[v][1]-display_loc[u][1],display_loc[v][1]-display_loc[u][1]);
+        let angle_v = Math.atan2(display_loc[v][0]-display_loc[u][0],display_loc[v][1]-display_loc[u][1]);
         // 判断是否要转180度
         // return [angle, angle_v];
         if(Math.PI/2<Math.abs(angle-angle_v) && Math.abs(angle-angle_v)<Math.PI*3/2){
             angle = Math.PI+angle;
         }
-        return [30*Math.cos(angle), 30*Math.sin(angle)];
+        let dis = Math.sqrt((display_loc[v][0]-display_loc[u][0])**2+(display_loc[v][1]-display_loc[u][1])**2);
+        return [dis/3*Math.cos(angle), dis/3*Math.sin(angle)];
     }
 
     let display_loc = loc_after_trans;
@@ -495,7 +499,11 @@ function interactive_bar() {
     // modify('pause', 0.12, 0.3);
     // modify('undo', 0.04, 0.5);
 
-    timeline_functions = addDateParam('timeline', '对应月份', 1971*12+1, 2020*12+12, 1971*12+1, null);
+    timeline_functions = addDateParam('timeline', '对应月份：', 1971*12+1, 2020*12+12, 1971*12+1, null);
+    addSelectParam('timeline_step', '每秒推进时间', ['5年','1年','3个月','1个月'], '1年', set_timeline_step);
+    // d3.select('#timeline_step')
+    //     .attr('position', 'absolute')
+    //     .attr('top', -1000)
 }
 
 function pos_after_transform(trans, pos){
@@ -505,7 +513,7 @@ function pos_after_transform(trans, pos){
 function draw_graph() {
 
     zoom = d3.zoom()
-        .scaleExtent([0.2, 5])
+        .scaleExtent([0.2, 20])
         .on("zoom", function (e, d) {
             if(e.transform.k == lasttrans.k && e.transform.x == lasttrans.x && e.transform.y == lasttrans.y) return;
             // let eps = 1e-4;
@@ -588,6 +596,13 @@ function data_prepare() {
 //     cal_shortest_path();
 //     view_show();
 // }
+let timeline_step=12;
+function set_timeline_step(opt) {
+    if(opt == '5年') timeline_step=60;
+    if(opt == '1年') timeline_step=12;
+    if(opt == '3个月') timeline_step=3;
+    if(opt == '1个月') timeline_step=1;
+}
 
 function update_month_year(){
     // year = document.getElementById('year').value;
@@ -599,7 +614,7 @@ function update_month_year(){
     // document.getElementById('text_year').textContent = 'year: ' + year;
     // document.getElementById('text_month').textContent = 'month: ' + month;
     let v_old = timeline_functions['getv']();
-    let v_new = v_old+12;
+    let v_new = v_old+timeline_step;
     if(v_new >= 2020*12+12) {v_new = 2020*12+12;pause();}
     timeline_functions['setv'](v_new);
 }
