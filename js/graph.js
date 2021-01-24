@@ -136,9 +136,6 @@ function view_show(){
     else if(tot_selected == 1){
         View1(select_id[0]);
     }
-    else{
-        View2(select_id[0], select_id[1]);
-    }
 }
 
 function Viewmain(){
@@ -146,34 +143,41 @@ function Viewmain(){
     for(let i = 0; i < tot_show_nodes; i++){
         loc_after_trans[i] = pos_after_transform(lasttrans, loc[i]);
     }
-    drawer(false);
+    drawer(true);
 }
 
 let const_V1_scale = 1;
 let V1_scale = const_V1_scale;
 function View1(ID) {  // 第一视图:有一个点在中间
     // console.log("Enter View 1! ID=",ID);
-    loc[ID] = project_to_screen(0.5, 0.5);
-    for(let i = 0; i < tot_show_nodes; i++){
-        if(i == ID) continue;
-        let real_dis = get_realdis(real_position[i], real_position[ID]);
-        let now_dis = result[i][ID];
-        loc[i][0] = loc[ID][0] + (real_position[ID][1] - real_position[i][1])*(now_dis/real_dis) * V1_scale;
-        loc[i][1] = loc[ID][1] + (real_position[i][0] - real_position[ID][0])*(now_dis/real_dis) * V1_scale;
-        loc_after_trans[i] = loc[i];
+    reset_zoom();
+    function dd(){
+        loc[ID] = project_to_screen(0.5, 0.5);
+        for(let i = 0; i < tot_show_nodes; i++){
+            if(i == ID) continue;
+            let real_dis = get_realdis(real_position[i], real_position[ID]);
+            let now_dis = result[i][ID];
+            loc[i][0] = loc[ID][0] + (real_position[ID][1] - real_position[i][1])*(now_dis/real_dis) * V1_scale;
+            loc[i][1] = loc[ID][1] + (real_position[i][0] - real_position[ID][0])*(now_dis/real_dis) * V1_scale;
+            loc_after_trans[i] = loc[i];
+        }
+        loc_after_trans[ID] = loc[ID];
+        drawer(true);
     }
-    drawer(true);
-}
-function View2(ID1, ID2) {  // 第二视图:选了两个点
-    // console.log("Enter View 2! ID1=",ID1, ", ID2=", ID2);
+    setTimeout(dd, 300);
+
 }
 function Recovery() {  // 恢复正常视图
     // console.log("Recovery");
-    graph_layout_algorithm();
-    for(let i = 0; i < tot_show_nodes; i++){
-        loc_after_trans[i] = loc[i];
+    reset_zoom();
+    function dd(){
+        graph_layout_algorithm();
+        for(let i = 0; i < tot_show_nodes; i++){
+            loc_after_trans[i] = loc[i];
+        }
+        drawer(true);
     }
-    drawer(true);
+    setTimeout(dd, 300);
 }
 
 function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
@@ -186,7 +190,7 @@ function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
         console.log(maxw, maxh);
         let tmp = Math.min((rmargin-lmargin)/2/maxw, (dmargin-umargin)/2/maxh);
         Vmain_scale /= tmp;
-        Recovery();
+        Viewmain();
     }
     function align_1() {
         let ID = select_id[0];
@@ -200,9 +204,6 @@ function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
         let tmp = Math.min((rmargin-lmargin)/2/maxw, (dmargin-umargin)/2/maxh);
         V1_scale *= tmp;
         View1(ID);
-    }
-    function align_2() {
-
     }
 
     if(tot_selected == 0) align_main();

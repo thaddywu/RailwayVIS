@@ -18,16 +18,45 @@ let tot_nodes, to = [], nxt = [], head = [], weight = [], tot_edges = 0; //用�
 let result = null; // result表示要传给图布局的结果(符合语义的最短路), 大小为tot_show_nodes*tot_show_nodes的二维数组
 let loc = []; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
 let loc_after_trans = []; // 一个tot_show_nodes*2的数组，表示每个点在zoom后应该在屏幕上的位置
-let link, node, text_node, zoom, lasttrans; // d3用来画图的东西
+let link, node, text_node, zoom, lasttrans={'k':1,'x':0,'y':0}; // d3用来画图的东西
 let year, month; // 交互的参数
 let tot_selected = 0, select_id = [];
 let ban = [];
+
+function set_ui() {
+    // 设置字体
+    let ua = navigator.userAgent.toLowerCase();
+    fontFamily = "Khand-Regular";
+    if (/\(i[^;]+;( U;)? CPU.+Mac OS X/gi.test(ua)) {
+        fontFamily = "PingFangSC-Regular";
+    }
+    d3.select("body")
+        .style("font-family", fontFamily);
+
+    //显示参数设计
+    text_opacity_normal = 0.6;
+    text_opacity_mouseon = 1.0;
+    node_stroke_opacity_normal = 0.6;
+    node_stroke_opacity_mouseon = 1.0;
+    // text_opacity_normal = 0.6;
+    // text_opacity_normal = 0.6;
+    // text_opacity_normal = 0.6;
+    // text_opacity_normal = 0.6;
+    // text_opacity_normal = 0.6;
+}
 
 function comp(str, yy, mm) { // 判断str所对应的字符串是否在yy.mm之后
     let LL = str.split('.');
     if(parseInt(LL[0]) != yy) return parseInt(LL[0]) > yy;
     if(LL.length == 1 || parseInt(LL[1],[10]) <= mm) return false;
     return true;
+}
+
+function max_railway_service(a, b) {
+    if(a == '高速铁路' || b == '高速铁路') return '高速铁路';
+    if(a == '快速铁路' || b == '快速铁路') return '快速铁路';
+    if(a == '普速铁路' || b == '普速铁路') return '普速铁路';
+    return '无';
 }
 
 function screener() {
@@ -66,9 +95,7 @@ function screener() {
         show_links[j].best_service = '无';
         for(let i=0;i<show_links[j].railways.length;i++) {
             if (comp(show_links[j].railways[i].date, year, month)) continue;
-            if (show_links[j].railways[i].service == '高速铁路') show_links[j].best_service = '高速铁路';
-            else if(show_links[j].railways[i].service == '快速铁路' && show_links[j].best_service != '高速铁路') show_links[j].best_service = '快速铁路';
-            else if(show_links[j].railways[i].service == '普速铁路' && show_links[j].best_service == '无') show_links[j].best_service = '普速铁路';
+            show_links[j].best_service = max_railway_service(show_links[j].best_service, show_links[j].railways[i].service);
         }
     }
 
@@ -79,6 +106,10 @@ function screener() {
     //         add_edge(j, i, get_realdis(real_position[i],real_position[j]));
     //     }
     // }
+}
+
+function selected(ID) {
+    return tot_selected == 1 && select_id[0] == ID;
 }
 
 function basic_configuration(svg) {
@@ -116,7 +147,6 @@ function basic_configuration(svg) {
                 Recovery(); return 0;
             }
             else{
-                node.attr('fill', d => getcolor());
                 select_id[0]=ID;
                 View1(ID); return 1;
             }
@@ -160,24 +190,23 @@ function basic_configuration(svg) {
         .selectAll("circle")
         .data(show_nodes)
         .join("circle")
-        .attr("r", function (d) {
-            if(d.level == 1) return 6;
-            else return 3;
-        })
-        .attr("stroke", "#000000")
-        .attr("stroke-width", function (d) {
-            if(d.level == 1) return 1;
-            else return 0.5;
-        })
-        .attr("fill", "#ffffff")
-        .attr("status", 0)
-        .on("mouseover", function (e, d) {// 鼠标悬停点上，颜色变浅，显示文字
+        .on("mouseover", function (e, d) {// 鼠标悬停点上：颜色变深、显示文字、相连的边高亮、View1中出现圆环和tooltip
             d3.select(this)
-                .attr('opacity', 0.3);
-            text_node.attr('display', function (f) {
-                if(f.id == d.id || f.level == 1) return "null";
-                return "none";
-            });
+                .attr('stroke-opacity', node_stroke_opacity_mouseon);
+            link
+                .attr('stroke-opacity', function (f) {
+                    if(f.u == d.id || f.v == d.id) return 1.0;
+                    return 0.3;
+                });
+            text_node
+                .attr('display', function (f) {
+                    if(f.id == d.id || f.level == 1 || selected(f.id)) return "null";
+                    return "none";
+                })
+                .attr('opacity', function (f) {
+                    if(f.id == d.id) return text_opacity_mouseon;
+                    else return text_opacity_normal;
+                });
             if(select_id.length == 1) {
                 let tooltip = d3.select('#tooltip');
 
@@ -198,13 +227,22 @@ function basic_configuration(svg) {
                     .attr('display', 'null')
             }
         })
-        .on("mouseout", function (e, d) {// 鼠标移出颜色恢复
+        .on("mouseout", function (e, d) {// 鼠标移出全部恢复
             d3.select(this)
-                .attr('opacity', 1.0);
-            text_node.attr('display', function (f) {
-                if(f.level == 1) return "null";
-                return "none";
-            });
+                .attr('stroke-opacity', node_stroke_opacity_normal);
+            link
+                .attr('stroke-opacity', function (f) {
+                    return 0.6;
+                });
+            text_node
+                .attr('display', function (f) {
+                    if(f.level == 1 || selected(f.id)) return "null";
+                    return "none";
+                })
+                .attr('opacity', function (f) {
+                    if(selected(f.id)) return text_opacity_mouseon;
+                    return text_opacity_normal;
+                });
             let tooltip= d3.select('#tooltip');
             tooltip.style('visibility', 'hidden');
             let circle = d3.select('#contour');
@@ -212,103 +250,125 @@ function basic_configuration(svg) {
         })
         .on("click", function (e, d) {
             let ret = click_node(d.id);
-            if(ret==1) d3.select(this).attr('fill', '#990000');
-            else if(ret==0) d3.select(this).attr('fill', getcolor());
         });
 
     text_node = svg.append("g")
         .selectAll("text")
         .data(show_nodes)
         .join("text")
-        .text(d => id2cityname[d.id])
-        .attr('display', function (d) {
-            if(d.level == 1) return 'null';
-            return 'none';
+        .text(d => id2cityname[d.id]);
+
+}
+
+function reset_zoom() {
+    d3.select('#container')
+        .select('svg')
+        .transition()
+        .duration(200)
+        .call(zoom.transform, d3.zoomIdentity.scale(1));
+}
+
+function sleep(delay) {
+    let start = (new Date()).getTime();
+    while((new Date()).getTime() - start < delay) {}
+}
+
+function drawer(need_transition) {
+    function get_link_color(service) {
+        if(service == '普速铁路') return "#808080";
+        if(service == '快速铁路') return "#A2795E";
+        if(service == '高速铁路') return "#BB4444";
+        return "#ffffff"; // 应该不会显示白色的了
+        // return "#d2691e";
+    }
+
+    let display_loc = loc_after_trans;
+    // for(let i=0;i<tot_show_nodes;i++){
+    //     for(let j=i+1;j<tot_show_nodes;j++){
+    //         if(display_loc[i][0]-display_loc[j][0])
+    //     }
+    // }
+
+    link
+        .attr('display', function (d) {if(d.best_service == '无') return "none"; return "null";})
+        .attr("stroke", d => get_link_color(d.best_service))
+        .attr("stroke-opacity", 0.6)
+        .transition()
+        .duration(function () {if(need_transition) return 1200; else return 0;})
+        .attr("x1", d => display_loc[d.u][1])
+        .attr("y1", d => display_loc[d.u][0])
+        .attr("x2", d => display_loc[d.v][1])
+        .attr("y2", d => display_loc[d.v][0]);
+
+    node
+        .attr("r", function (d) {if(d.level == 1) return 6; else return 3;})
+        .attr("stroke", function (d) {
+            let len = show_links.length;
+            let tmp = '无';
+            for(let i=0;i<len;i++){
+                if(show_links[i].u != d.id && show_links[i].v != d.id) continue;
+                tmp = max_railway_service(tmp, show_links[i].best_service);
+            }
+            if(tmp == '无') return '#000000';
+            return get_link_color(tmp);
+        })
+        .attr("stroke-width", function (d) {if(d.level == 1) return 1; else return 0.5;})
+        .attr('stroke-opacity', node_stroke_opacity_normal)
+        .attr("fill", function (d) {
+            if(selected(d.id)) return '#000000';
+            else return '#ffffff';
+        })
+        .transition()
+        .duration(function () {if(need_transition) return 1200; else return 0;})
+        .attr("cx", d => display_loc[d.id][1])
+        .attr("cy", d => display_loc[d.id][0]);
+    text_node
+        .attr('display', function (d) {if(d.level == 1 || selected(d.id)) return 'null';return 'none';})
+        .attr('font-size', function (d) {if(d.level == 1) return 12; return 9;})
+        .attr('opacity', function (d){
+            if(selected(d.id)) return text_opacity_mouseon;
+            return text_opacity_normal;
+        })
+        .transition()
+        .duration(function () {if(need_transition) return 1200; else return 0;
+        })
+        .attr("x", function(d){
+            let len = id2cityname[d.id].length;
+            if(d.level == 1){
+                if(len == 2) return display_loc[d.id][1] - 13;
+                if(len == 3) return display_loc[d.id][1] - 18;
+                if(len == 4) return display_loc[d.id][1] - 24;
+                console.log("text length error");return 100;
+            }
+            else{
+                if(len == 2) return display_loc[d.id][1] - 10;
+                if(len == 3) return display_loc[d.id][1] - 13;
+                if(len == 4) return display_loc[d.id][1] - 18;
+                console.log("text length error");return 100;
+            }
+        })
+        .attr("y", function(d) {
+            if (d.level == 1) return display_loc[d.id][0] - 11;
+            else return display_loc[d.id][0] - 7;
         });
 
 }
 
-function drawer(reset_zoom) {
-    function get_link_color(d) {
-        if(d.best_service == '普速铁路') return "#808080";
-        if(d.best_service == '快速铁路') return "#A2795E";
-        if(d.best_service == '高速铁路') return "#BB4444";
-        return "#ffffff"; // 应该不会显示白色的了
-        // return "#d2691e";
-    }
-    if(reset_zoom) {
-        d3.select('#container')
-            .select('svg')
-            .transition()
-            .duration(750)
-            .call(zoom.transform, d3.zoomIdentity.scale(1));
-        link
-            .attr('display', d => function (d) {
-                if(d.best_service == '无') return "none";
-                return "null";
-            })
-            .attr("stroke", d => get_link_color(d))
-            .attr("stroke-opacity", 0.6)
-            .transition()
-            .duration(1200)
-            .attr("x1", d => loc[d.u][1])
-            .attr("y1", d => loc[d.u][0])
-            .attr("x2", d => loc[d.v][1])
-            .attr("y2", d => loc[d.v][0]);
-        node
-            .transition()
-            .duration(1200)
-            .attr("cx", d => loc[d.id][1])
-            .attr("cy", d => loc[d.id][0]);
-        text_node
-            .transition()
-            .duration(1200)
-            .attr("x", d => (loc[d.id][1] - 13))
-            .attr("y", d => (loc[d.id][0] - 12));
-    }
-    else{
-        link
-            .attr('display', d => function (d) {
-                if(d.best_service == '无') return "none";
-                return "null";
-            })
-            .attr("stroke", d => get_link_color(d))
-            .attr("stroke-opacity", 0.6)
-            .transition()
-            .duration(1200)
-            .attr("x1", d => loc_after_trans[d.u][1])
-            .attr("y1", d => loc_after_trans[d.u][0])
-            .attr("x2", d => loc_after_trans[d.v][1])
-            .attr("y2", d => loc_after_trans[d.v][0]);
-        node
-            .transition()
-            .duration(1200)
-            .attr("cx", d => loc_after_trans[d.id][1])
-            .attr("cy", d => loc_after_trans[d.id][0]);
-        text_node
-            .transition()
-            .duration(1200)
-            .attr("x", d => (loc_after_trans[d.id][1] - 13))
-            .attr("y", d => (loc_after_trans[d.id][0] - 12));
-    }
-
-}
-
 function interactive_bar() {
-    function modify(name, _left, _top) {
-        txt = document.getElementById(name);
-        txt.style.position = 'absolute';
-        txt.style.left = _left * _width + 'px';
-        txt.style.top = _top * _height + 'px';
-    }
-    function show(name) {
-        txt = document.getElementById(name);
-        txt.style.display = "block";
-    }
-    function hide(name) {
-        txt = document.getElementById(name);
-        txt.style.display = "none";
-    }
+    // function modify(name, _left, _top) {
+    //     txt = document.getElementById(name);
+    //     txt.style.position = 'absolute';
+    //     txt.style.left = _left * _width + 'px';
+    //     txt.style.top = _top * _height + 'px';
+    // }
+    // function show(name) {
+    //     txt = document.getElementById(name);
+    //     txt.style.display = "block";
+    // }
+    // function hide(name) {
+    //     txt = document.getElementById(name);
+    //     txt.style.display = "none";
+    // }
 
     // modify('text_year', 0.02, 0.15);
     // modify('year', 0.02, 0.2);
@@ -330,28 +390,16 @@ function draw_graph() {
     zoom = d3.zoom()
         .scaleExtent([0.2, 5])
         .on("zoom", function (e, d) {
+            if(e.transform.k == lasttrans.k && e.transform.x == lasttrans.x && e.transform.y == lasttrans.y) return;
+            // let eps = 1e-4;
+            // if(Math.abs(e.transform.k-lasttrans.k)<eps
+            //     && Math.abs(e.transform.x-lasttrans.x)<eps
+            //     && Math.abs(e.transform.y-lasttrans.y)<eps) return;
             lasttrans = e.transform;
-
             for(let i = 0; i < tot_show_nodes; i++){
                 loc_after_trans[i] = pos_after_transform(e.transform, loc[i]);
             }
-
-            // node.attr("transform", e.transform);
-            // link.attr("transform", e.transform);
-
-            link
-                .attr("x1", d => loc_after_trans[d.u][1])
-                .attr("y1", d => loc_after_trans[d.u][0])
-                .attr("x2", d => loc_after_trans[d.v][1])
-                .attr("y2", d => loc_after_trans[d.v][0]);
-
-            node
-                .attr("cx", d => loc_after_trans[d.id][1])
-                .attr("cy", d => loc_after_trans[d.id][0]);
-
-            text_node
-                .attr("x", d => (loc_after_trans[d.id][1]-15))
-                .attr("y", d => (loc_after_trans[d.id][0]-10));
+            drawer(false);
         });
 
 
@@ -375,16 +423,6 @@ function draw_graph() {
 
 }
 
-function set_ui() {
-    // 设置字体
-    let ua = navigator.userAgent.toLowerCase();
-    fontFamily = "Khand-Regular";
-    if (/\(i[^;]+;( U;)? CPU.+Mac OS X/gi.test(ua)) {
-        fontFamily = "PingFangSC-Regular";
-    }
-    d3.select("body")
-        .style("font-family", fontFamily);
-}
 
 let data1 = null, data2 = null, data3 = null;
 function data_prepare() {
