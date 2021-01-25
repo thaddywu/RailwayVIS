@@ -18,7 +18,8 @@ let tot_nodes, to = [], nxt = [], head = [], weight = [], tot_edges = 0; //用�
 let result = null; // result表示要传给图布局的结果(符合语义的最短路), 大小为tot_show_nodes*tot_show_nodes的二维数组
 let loc = []; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
 let loc_after_trans = []; // 一个tot_show_nodes*2的数组，表示每个点在zoom后应该在屏幕上的位置
-let link, node, text_node, zoom, lasttrans={'k':1,'x':0,'y':0}; // d3用来画图的东西
+let link, node, text_node, plotting_scale; // d3用来画图的东西
+let zoom, lasttrans={'k':1,'x':0,'y':0}, mode='lock';
 let year, month; // 交互的参数
 let tot_selected = 0, select_id = [];
 let ban = [];
@@ -146,12 +147,12 @@ function screener() {
 
     tot_edges = 0;
     head = [];
-    for(train_id in data1){
+    for(let train_id in data1){
         let nn = data1[train_id].route.length;
         for(let i = 0; i < nn - 1; i++){
             if(comp(data1[train_id].date[i], year, month)) continue;
             let flag = 0;
-            for(j=0;j<ban.length;j++){
+            for(let j=0;j<ban.length;j++){
                 if(belong(data1[train_id].route[i].city,data1[train_id].route[i+1].city,data1[train_id].date[i],data3[ban[j]])) flag=1;
             }
             if(flag) continue;
@@ -185,7 +186,7 @@ function selected(ID) {
 }
 
 function basic_configuration(svg) {
-    //这个函数涉及我们之前吹出来的三种交互、以及图布局的美工之类的东西。
+    //这个函数涉及我们之前吹出来的两种交互、以及图布局的美工之类的东西。
     svg.append('g')
         .attr('transform', `translate(${lmargin+(rmargin-lmargin)/2}, ${umargin*0.7})`)
         .append('text')
@@ -247,7 +248,8 @@ function basic_configuration(svg) {
             let tooltip= d3.select('#tooltip');
             tooltip.style('visibility', 'hidden');
         })
-        .on("dblclick", function (e, d) {
+        .on("click", function (e, d) {
+            console.log(1);
             if(ban.length != 0) return;
             for(i=0;i<d.railways.length;i++){
                 ban.push(d.railways[i].name);
@@ -333,6 +335,24 @@ function basic_configuration(svg) {
         .join("text")
         .text(d => id2cityname[d.id]);
 
+    plotting_scale = svg.append("g");
+    plotting_scale
+        .append('line')
+        .attr('id', 'scale_line')
+        .attr('x1', lmargin)
+        .attr('y1', dmargin-10)
+        .attr('x2', lmargin+300)
+        .attr('y2', dmargin-10)
+        .attr('stroke', '#000000');
+    plotting_scale.append('line').attr('id', 'scale_short_line1').attr('x1', lmargin).attr('y1', dmargin-10).attr('x2', lmargin).attr('y2', dmargin-15).attr('stroke', '#000000');
+    plotting_scale.append('line').attr('id', 'scale_short_line2').attr('x1', lmargin+60).attr('y1', dmargin-10).attr('x2', lmargin+60).attr('y2', dmargin-15).attr('stroke', '#000000');
+    plotting_scale.append('line').attr('id', 'scale_short_line3').attr('x1', lmargin+120).attr('y1', dmargin-10).attr('x2', lmargin+120).attr('y2', dmargin-15).attr('stroke', '#000000');
+    plotting_scale.append('line').attr('id', 'scale_short_line4').attr('x1', lmargin+300).attr('y1', dmargin-10).attr('x2', lmargin+300).attr('y2', dmargin-15).attr('stroke', '#000000');
+    plotting_scale.append('text').attr('id', 'scale_text1').attr('x', lmargin).attr('y', dmargin+2).attr('font-size', '12px').text('0');
+    plotting_scale.append('text').attr('id', 'scale_text2').attr('x', lmargin+60).attr('y', dmargin+2).attr('font-size', '12px').text('1h');
+    plotting_scale.append('text').attr('id', 'scale_text3').attr('x', lmargin+120).attr('y', dmargin+2).attr('font-size', '12px').text('2h');
+    plotting_scale.append('text').attr('id', 'scale_text4').attr('x', lmargin+300).attr('y', dmargin+2).attr('font-size', '12px').text('5h');
+
 }
 
 function reset_zoom() {
@@ -389,11 +409,7 @@ function drawer(need_transition) {
     }
 
     let display_loc = loc_after_trans;
-    // for(let i=0;i<tot_show_nodes;i++){
-    //     for(let j=i+1;j<tot_show_nodes;j++){
-    //         if(display_loc[i][0]-display_loc[j][0])
-    //     }
-    // }
+
     link
         .attr('display', function (d) {if(d.best_service == '无') return "none"; return "null";})
         .attr("stroke", d => get_link_color(d.best_service))
@@ -473,6 +489,68 @@ function drawer(need_transition) {
             else return display_loc[d.id][0] - 7;
         });
 
+    function draw_plotting_scale() {
+        plotting_scale
+            .select('#scale_line')
+            .transition()
+            .duration(300)
+            .attr('x2', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 300;
+                else return lmargin + lasttrans.k * V1_scale * 300;
+            });
+        plotting_scale.select('#scale_short_line2')
+            .transition()
+            .duration(300)
+            .attr('x1', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 60;
+                else return lmargin + lasttrans.k * V1_scale * 60;
+            })
+            .attr('x2', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 60;
+                else return lmargin + lasttrans.k * V1_scale * 60;
+            });
+        plotting_scale.select('#scale_short_line3')
+            .transition()
+            .duration(300)
+            .attr('x1', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 120;
+                else return lmargin + lasttrans.k * V1_scale * 120;
+            })
+            .attr('x2', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 120;
+                else return lmargin + lasttrans.k * V1_scale * 120;
+            });
+        plotting_scale.select('#scale_short_line4')
+            .transition()
+            .duration(300)
+            .attr('x1', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 300;
+                else return lmargin + lasttrans.k * V1_scale * 300;
+            })
+            .attr('x2', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 300;
+                else return lmargin + lasttrans.k * V1_scale * 300;
+            });
+        plotting_scale.select('#scale_text2').transition()
+            .duration(300)
+            .attr('x', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 60 - 5;
+                else return lmargin + lasttrans.k * V1_scale * 60 - 5;
+            });
+        plotting_scale.select('#scale_text3').transition()
+            .duration(300)
+            .attr('x', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 120 - 5;
+                else return lmargin + lasttrans.k * V1_scale * 120 - 5;
+            });
+        plotting_scale.select('#scale_text4').transition()
+            .duration(300)
+            .attr('x', function () {
+                if (tot_selected == 0) return lmargin + lasttrans.k * Vmain_scale * 300 - 5;
+                else return lmargin + lasttrans.k * V1_scale * 300 - 5;
+            });
+    }
+    draw_plotting_scale();
 }
 
 function interactive_bar() {
@@ -513,7 +591,7 @@ function pos_after_transform(trans, pos){
 function draw_graph() {
 
     zoom = d3.zoom()
-        .scaleExtent([0.2, 20])
+        .scaleExtent([0.02, 20])
         .on("zoom", function (e, d) {
             if(e.transform.k == lasttrans.k && e.transform.x == lasttrans.x && e.transform.y == lasttrans.y) return;
             // let eps = 1e-4;
@@ -524,6 +602,7 @@ function draw_graph() {
             for(let i = 0; i < tot_show_nodes; i++){
                 loc_after_trans[i] = pos_after_transform(e.transform, loc[i]);
             }
+            scale = e.transform.k;
             drawer(false);
         });
 
@@ -642,6 +721,17 @@ function undo() {
     screener();
     cal_shortest_path();
     view_show();
+}
+
+function xor_lock() {
+    if(mode == 'lock'){
+        mode = 'free';
+        d3.select('#lock').attr('src', "icon/unlock.jpg");
+    }
+    else{
+        mode = 'lock';
+        d3.select('#lock').attr('src', "icon/lock.jpg");
+    }
 }
 
 function main() {

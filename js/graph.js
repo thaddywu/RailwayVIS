@@ -42,7 +42,7 @@ function Polar2cartesian(d, r){
 }
 
 
-let const_Vmain_scale = 4;
+let const_Vmain_scale = 1;
 
 var STANDARD_AVGPOS = [];     // 重心位置
 var support_cityname = "乌鲁木齐";    // 选取方向固定城市名
@@ -64,8 +64,8 @@ function set_pos(){
 
     // 这一段是为了固定重心
     for(let i = 0; i <tot_show_nodes; i++){
-        compute_position[i][0] /= Vmain_scale;
-        compute_position[i][1] /= Vmain_scale;
+        compute_position[i][0] *= Vmain_scale;
+        compute_position[i][1] *= Vmain_scale;
     }
 
     let avgpos = avgpos_compute(compute_position);
@@ -130,6 +130,10 @@ function set_pos(){
 
 // 下面开始是关于交互部分的位置计算与显示
 function view_show(){
+    if(mode == 'lock'){
+        align_with_screen();
+        return;
+    }
     if(tot_selected == 0){
         Viewmain();
     }
@@ -141,6 +145,7 @@ function view_show(){
 function Viewmain(){
     graph_layout_algorithm();
     for(let i = 0; i < tot_show_nodes; i++){
+        // loc_after_trans[i] = pos_after_transform({'k':tmp, 'x':STANDARD_AVGPOS[1], 'y':STANDARD_AVGPOS[0]}, loc[i]);
         loc_after_trans[i] = pos_after_transform(lasttrans, loc[i]);
     }
     drawer(true);
@@ -182,30 +187,50 @@ function Recovery() {  // 恢复正常视图
 
 function align_with_screen() {  // 将当前的图拉伸至屏幕刚好能装下
     function align_main() {
+        graph_layout_algorithm();
         let maxw = 0, maxh = 0;
         for(let i = 0; i < tot_show_nodes; i++){
             maxh = Math.max(maxh, Math.abs(loc[i][0] - STANDARD_AVGPOS[1]));
             maxw = Math.max(maxw, Math.abs(loc[i][1] - STANDARD_AVGPOS[0]));
         }
-        console.log(maxw, maxh);
+        maxh *= lasttrans.k;
+        maxw *= lasttrans.k;
+        // console.log(maxw, maxh);
         let tmp = Math.min((rmargin-lmargin)/2/maxw, (dmargin-umargin)/2/maxh);
-        Vmain_scale /= tmp;
+        Vmain_scale *= tmp;
+        // console.log(lasttrans.k, Vmain_scale, tmp);
         Viewmain();
     }
     function align_1() {
         let ID = select_id[0];
+
+        //这段应该与View1里对应部分完全一致，现在是为了省事直接粘过来了，如果之后要改一定要一起改
+        loc[ID] = project_to_screen(0.5, 0.5);
+        for(let i = 0; i < tot_show_nodes; i++){
+            if(i == ID) continue;
+            let real_dis = get_realdis(real_position[i], real_position[ID]);
+            let now_dis = result[i][ID];
+            loc[i][0] = loc[ID][0] + (real_position[ID][1] - real_position[i][1])*(now_dis/real_dis) * V1_scale;
+            loc[i][1] = loc[ID][1] + (real_position[i][0] - real_position[ID][0])*(now_dis/real_dis) * V1_scale;
+            loc_after_trans[i] = loc[i];
+        }
+        loc_after_trans[ID] = loc[ID];
+        //到这结束
+
         let maxw = 0, maxh = 0;
         for(let i = 0; i < tot_show_nodes; i++){
             if(i == ID) continue;
             maxh = Math.max(maxh, Math.abs(loc[i][0] - loc[ID][0]));
             maxw = Math.max(maxw, Math.abs(loc[i][1] - loc[ID][1]));
         }
-        console.log(maxw, maxh);
+        maxh *= scale;
+        maxw *= scale;
+        // console.log(maxw, maxh);
         let tmp = Math.min((rmargin-lmargin)/2/maxw, (dmargin-umargin)/2/maxh);
         V1_scale *= tmp;
         View1(ID);
     }
-
+    reset_zoom();
     if(tot_selected == 0) align_main();
     else if(tot_selected == 1) align_1();
 

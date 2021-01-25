@@ -106,8 +106,9 @@ function addDateParam(name, description, min_value, max_value, default_value, ca
             <div class="handle" draggable="false" id="${name}-handle"></div>
         </div>
         <img class="param-button1" id="pause" src="icon/pause.jpg" onclick="pause()" alt="炸了"/>
-        <img class="param-button2" id="align" src="icon/align.jpg" onclick="align_with_screen()"/>
+        <img class="param-button2" id="align" src="icon/align.jpg" "/>
         <img class="param-button3" id="undo" src="icon/undo.jpg" onclick="undo()"/>
+        <img class="param-button4" id="lock" src="icon/lock.jpg" onclick="xor_lock()"/>
         <p class="param-value" id="${name}-value"></p>
     `)
 
