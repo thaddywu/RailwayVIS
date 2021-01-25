@@ -143,7 +143,7 @@ function addDateParam(name, description, min_value, max_value, default_value, ca
         params[name] = v_int;
         year = Math.floor((v_int-1)/12);
         month = (v_int-1)%12+1;
-        display.text(year+'年'+month+'月');
+        display.text(year+' 年 '+month+' 月');
 
         let p = v2p(v);
         handle.offset({left: p + 9});
