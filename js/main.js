@@ -18,10 +18,10 @@ let tot_nodes, to = [], nxt = [], head = [], weight = [], tot_edges = 0; //用�
 let result = null; // result表示要传给图布局的结果(符合语义的最短路), 大小为tot_show_nodes*tot_show_nodes的二维数组
 let loc = []; // loc为一个tot_show_nodes*2的数组，表示每个点应该在屏幕上的位置
 let loc_after_trans = []; // 一个tot_show_nodes*2的数组，表示每个点在zoom后应该在屏幕上的位置
-let link, node, text_node, plotting_scale; // d3用来画图的东西
+let link, node, text_node, text_link, plotting_scale; // d3用来画图的东西
 let zoom, lasttrans={'k':1,'x':0,'y':0}, mode='lock';
 let year, month; // 交互的参数
-let tot_selected = 0, select_id = [];
+let tot_selected = 0, select_id = [], new_link_info = [];
 let ban = [];
 
 function set_ui() {
@@ -199,12 +199,23 @@ function basic_configuration(svg) {
 
     function get_railway_info(L) {
         let content = "";
-        for(i=0;i<L.length;i++){
+        for(let i=0;i<L.length;i++){
             if(comp(L[i].date, year, month)) continue;
             content += L[i].name + ':<br/><table>' +
                 '<tr><td>铁路类型:</td><td>' + L[i].service +'</td></tr>' +
                 '<tr><td>电气化:</td><td>' + L[i].electrification +'</td></tr>' +
                 '<tr><td>开通时间:</td><td>' + L[i].date +'</td></tr></table>'
+        }
+        return content;
+    }
+    function get_adj_railways_info(ID) {
+        let content = "相邻城市<br/>";
+        for(let i=0;i<show_links.length;i++){
+            if(show_links[i].best_service == '无') continue;
+            if(show_links[i].u!=ID && show_links[i].v!=ID) continue;
+            let tmp = show_links[i].u;
+            if(show_links[i].u == ID) tmp = show_links[i].v;
+            content += id2cityname[tmp]+': ' + show_links[i].best_service +'<br/>';
         }
         return content;
     }
@@ -282,12 +293,21 @@ function basic_configuration(svg) {
                     if(f.id == d.id) return text_opacity_mouseon;
                     else return text_opacity_normal;
                 });
-            if(select_id.length == 1) {
+            if(select_id.length == 0) {
                 let tooltip = d3.select('#tooltip');
-
+                let content = get_adj_railways_info(d.id);
+                tooltip.html(content)
+                    .style('position', 'absolute')
+                    // .style("left", (lmargin + (rmargin - lmargin) * 0.8) + "px")
+                    // .style("top", (umargin) + "px")
+                    .style("left",e.clientX+5+"px")
+                    .style("top",e.clientY+5+"px")
+                    .style('visibility', 'visible');
+            }
+            else{
+                let tooltip = d3.select('#tooltip');
                 let content = "从 " + id2cityname[select_id[0]] +' 到 ' + id2cityname[d.id] + '<br/>需要'
                  + Math.floor(result[select_id[0]][d.id]/60) + ' 小时 ' + Math.floor(result[select_id[0]][d.id]%60) + '分钟';
-                // content = '1';
                 tooltip.html(content)
                     .style('position', 'absolute')
                     // .style("left", (lmargin + (rmargin - lmargin) * 0.8) + "px")
@@ -353,6 +373,15 @@ function basic_configuration(svg) {
     plotting_scale.append('text').attr('id', 'scale_text3').attr('x', lmargin+120).attr('y', dmargin+2).attr('font-size', '12px').text('2h');
     plotting_scale.append('text').attr('id', 'scale_text4').attr('x', lmargin+300).attr('y', dmargin+2).attr('font-size', '12px').text('5h');
 
+    let data3_array = Object.keys(data3).map(it=>{
+        return { ['key']: it, ['value']: data3[it] }
+    });
+    text_link = svg.append('g')
+        .selectAll('text')
+        .data(data3_array)
+        .join('text')
+        .text(d => d.value.date + " " + d.key+"("+d.value.start+" - "+d.value.end+")"+"开通");
+    console.log(text_link);
 }
 
 function reset_zoom() {
@@ -551,6 +580,21 @@ function drawer(need_transition) {
             });
     }
     draw_plotting_scale();
+    text_link
+        .transition()
+        .duration(1200)
+        .attr('display', function (d) {
+            if(new_link_info.findIndex((item) => item == d.key) != -1) return "null";
+            return "none";
+        })
+        .attr('x', rmargin*0.88)
+        .attr('y', function (d) {
+            // return dmargin;
+            let index = new_link_info.findIndex((item) => item == d.key);
+            if(index == -1) return dmargin;
+            return dmargin - 300 + index * 20;
+        })
+    console.log(text_link);
 }
 
 function interactive_bar() {
@@ -692,8 +736,22 @@ function update_month_year(){
     // document.getElementById('year').value = year;
     // document.getElementById('text_year').textContent = 'year: ' + year;
     // document.getElementById('text_month').textContent = 'month: ' + month;
-    let v_old = timeline_functions['getv']();
+    let v_old = Math.round(timeline_functions['getv']());
     let v_new = v_old+timeline_step;
+    for(let railway_name in data3){
+        if(comp(data3[railway_name].date, Math.floor((v_old-1)/12), (v_old-1)%12+1)){
+            if(!comp(data3[railway_name].date, Math.floor((v_new-1)/12), (v_new-1)%12+1)){
+                // console.log(data3[railway_name].date, )
+                new_link_info.push(railway_name);
+            }
+        }
+    }
+    new_link_info.reverse();
+    while(new_link_info.length>15){
+        new_link_info.pop();
+    }
+    new_link_info.reverse();
+
     if(v_new >= 2020*12+12) {v_new = 2020*12+12;pause();}
     timeline_functions['setv'](v_new);
 }
