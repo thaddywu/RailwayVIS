@@ -499,8 +499,8 @@ function interactive_bar() {
     // modify('pause', 0.12, 0.3);
     // modify('undo', 0.04, 0.5);
 
-    timeline_functions = addDateParam('timeline', '对应月份：', 1971*12+1, 2020*12+12, 1971*12+1, null);
-    addSelectParam('timeline_step', '每秒推进时间', ['5年','1年','3个月','1个月'], '1年', set_timeline_step);
+    timeline_functions = addDateParam('timeline', ' 当前日期：', 1971*12+1, 2020*12+12, 1971*12+1, null);
+    addSelectParam('timeline_step', '每秒推进时间', ['5 年','1 年','3 个月','1 个月'], '1 年', set_timeline_step);
     // d3.select('#timeline_step')
     //     .attr('position', 'absolute')
     //     .attr('top', -1000)
@@ -598,10 +598,10 @@ function data_prepare() {
 // }
 let timeline_step=12;
 function set_timeline_step(opt) {
-    if(opt == '5年') timeline_step=60;
-    if(opt == '1年') timeline_step=12;
-    if(opt == '3个月') timeline_step=3;
-    if(opt == '1个月') timeline_step=1;
+    if(opt == '5 年') timeline_step=60;
+    if(opt == '1 年') timeline_step=12;
+    if(opt == '3 个月') timeline_step=3;
+    if(opt == '1 个月') timeline_step=1;
 }
 
 function update_month_year(){
